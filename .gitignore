@@ -1,0 +1,33 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+*.p8
+**/service-account*.json
+**/google-credentials*.json
+
+# flutter / dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/build/
+app/ios/Pods/
+app/android/.gradle/
+app/.idea/
+*.iml
+.packages
+pubspec.lock
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+
+# node (backend / edge functions)
+node_modules/
+dist/
+.wrangler/
+
+# os / editor
+.DS_Store
+.vscode/
+*.log
