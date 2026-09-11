@@ -26,6 +26,32 @@ class AnchorApi {
       weighedAgainst: ['Pricing', 'Gym', 'Dad', 'Sleep'],
     );
   }
+
+  /// GET /conversations/current  → the running Talk transcript
+  Future<List<Turn>> conversation() async {
+    // MOCK — the always-on companion's last few turns.
+    return const [
+      Turn(role: 'anchor', text: "You've kept the gym once this week. Sunday's open — lock it in now?"),
+      Turn(role: 'user', text: "Yeah, Sunday morning works."),
+      Turn(role: 'anchor', text: "Done. If it rains, you said you'd do the 20-minute home set instead. Still good?"),
+      Turn(role: 'user', text: "Still good."),
+    ];
+  }
+
+  /// GET /weeks/current/standing  → the end-of-week review
+  Future<WeeklyStanding> standing() async {
+    return const WeeklyStanding(
+      keptCount: 2,
+      totalCount: 3,
+      anchorMessage:
+          "Two of three. The gym slipped once — that's one week, not who you are. Same three next week, or swap one?",
+      items: [
+        StandingItem(title: 'Ship the pricing revamp', outcome: 'kept'),
+        StandingItem(title: 'Call Dad, Sunday', outcome: 'kept'),
+        StandingItem(title: 'Three gym sessions', outcome: 'missed', note: 'forgiven · carried'),
+      ],
+    );
+  }
 }
 
 class Commitment {
@@ -50,4 +76,30 @@ class Judgment {
     required this.spoken,
     required this.weighedAgainst,
   });
+}
+
+class Turn {
+  final String role; // user | anchor
+  final String text;
+  const Turn({required this.role, required this.text});
+}
+
+class WeeklyStanding {
+  final int keptCount;
+  final int totalCount;
+  final String anchorMessage;
+  final List<StandingItem> items;
+  const WeeklyStanding({
+    required this.keptCount,
+    required this.totalCount,
+    required this.anchorMessage,
+    required this.items,
+  });
+}
+
+class StandingItem {
+  final String title;
+  final String outcome; // kept | missed | forgiven
+  final String? note;
+  const StandingItem({required this.title, required this.outcome, this.note});
 }
