@@ -1,0 +1,24 @@
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Load backend/.env first, then fall back to the repo-root .env for shared keys.
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+
+function firstOf(names: string[]): string {
+  for (const n of names) {
+    const v = process.env[n];
+    if (v) return v;
+  }
+  throw new Error(`Missing required environment variable: one of ${names.join(', ')}`);
+}
+
+export const env = {
+  port: Number(process.env.PORT ?? 3000),
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+  supabaseUrl: firstOf(['SUPABASE_URL']),
+  // Full DB access, bypasses RLS. Server-side only.
+  supabaseSecretKey: firstOf(['SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY']),
+  // Used only for email/password auth flows.
+  supabasePublishableKey: firstOf(['SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ANON_KEY']),
+};
