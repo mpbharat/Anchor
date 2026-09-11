@@ -31,7 +31,7 @@ class AnchorApi {
   Future<List<Turn>> conversation() async {
     // MOCK — the always-on companion's last few turns.
     return const [
-      Turn(role: 'anchor', text: "You've kept the gym once this week. Sunday's open — lock it in now?"),
+      Turn(role: 'anchor', text: "You've kept the gym once this week. Sunday's open, lock it in now?"),
       Turn(role: 'user', text: "Yeah, Sunday morning works."),
       Turn(role: 'anchor', text: "Done. If it rains, you said you'd do the 20-minute home set instead. Still good?"),
       Turn(role: 'user', text: "Still good."),
@@ -44,7 +44,7 @@ class AnchorApi {
       keptCount: 2,
       totalCount: 3,
       anchorMessage:
-          "Two of three. The gym slipped once — that's one week, not who you are. Same three next week, or swap one?",
+          "Two of three. The gym slipped once, that's one week, not who you are. Same three next week, or swap one?",
       items: [
         StandingItem(title: 'Ship the pricing revamp', outcome: 'kept'),
         StandingItem(title: 'Call Dad, Sunday', outcome: 'kept'),
