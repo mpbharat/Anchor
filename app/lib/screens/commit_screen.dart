@@ -26,9 +26,9 @@ class CommitScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: AnchorBox.surface(),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('Write the launch newsletter',
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                 SizedBox(height: 12),

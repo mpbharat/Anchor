@@ -34,7 +34,7 @@ ThemeData anchorTheme() {
     colorScheme: ColorScheme.fromSeed(
       seedColor: AnchorColors.accent,
       primary: AnchorColors.accent,
-      background: AnchorColors.scr,
+      surface: AnchorColors.scr,
     ),
     textTheme: const TextTheme(
       // Heavy display for wordmarks/headlines; monospace is used inline for data/labels.

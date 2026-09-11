@@ -22,7 +22,7 @@ class AnchorApi {
     return const Judgment(
       verdict: 'declined',
       spoken:
-          "A newsletter sounds like it matters. Your call, but you're at four and behind on the gym — if it goes in, which comes out?",
+          "A newsletter sounds like it matters. Your call, but you're at four and behind on the gym. If it goes in, which comes out?",
       weighedAgainst: ['Pricing', 'Gym', 'Dad', 'Sleep'],
     );
   }

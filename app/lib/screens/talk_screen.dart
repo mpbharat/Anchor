@@ -88,8 +88,8 @@ class _ListeningBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: AnchorBox.surface(bg: AnchorColors.ink),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.mic, color: Colors.white, size: 20),
           SizedBox(width: 12),
           Text('Listening…',
