@@ -1,0 +1,12 @@
+{
+  "_comment": "Exact body for POST /users/:id/patterns. Maria extracts a ChatGPT/Claude paste into this shape.",
+  "source": "chatgpt",
+  "personality": { "drivers": ["builds fast", "hates idle"], "risk": "overcommits" },
+  "pitfalls": ["says yes then resents it", "starts a 5th thing on Fridays"],
+  "working_style": "deep-work mornings, fades after 4pm",
+  "current_projects": ["Anchor", "KPS reporting"],
+  "baseline_load": "already near capacity",
+  "priorities": ["ship > polish", "family evenings"],
+  "habits": ["orders food ~Sat 6pm", "gym Mon/Wed/Fri"],
+  "raw_import": "<full pasted text, kept for re-extraction>"
+}
