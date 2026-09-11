@@ -385,7 +385,7 @@ _Homework / prep (finish today):_
 - [x] This build spec ready for handoff — DONE
 - [x] stack decision — Flutter (§4, locked)
 - [x] fold Zaasu (Z) learnings into §8.6 — DONE
-- [ ] [Bharat] confirm the remaining open decision (§12): demo data / account
+- [x] demo data / account — Mary's account for testing + demo (§12)
 - [ ] [All] read this spec end to end; agree the API shapes
 
 _Build the body (legal scaffolding, no product logic — finish today):_
@@ -414,7 +414,7 @@ _Build the body (legal scaffolding, no product logic — finish today):_
 ## 12. Open decisions to confirm BEFORE kickoff
 
 1. ~~**Stack:** Expo/React Native vs Flutter.~~ **RESOLVED — Flutter** (§4).
-2. **Whose data seeds the demo:** whose ChatGPT/Claude export + which Google account for Gmail/Calendar (one shared account is enough — do not build per-user Google auth for the demo). *(Still open — Bharat.)*
+2. ~~**Whose data seeds the demo:**~~ **RESOLVED — Mary's account** for testing + the demo (one shared Google + ChatGPT/Claude export; no per-user Google auth for the demo).
 
 ---
 
