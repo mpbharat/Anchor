@@ -43,12 +43,12 @@ Repo: `github.com/mpbharat/Anchor`.
 
 ---
 
-## 4. Tech stack (ASSUMED — confirm in §12)
+## 4. Tech stack (LOCKED)
 
-- **Front-end:** Expo / React Native (one codebase → iOS + Android), TypeScript. Expo push notifications for nudges. *(Alternative: Flutter. Pick one before kickoff.)*
+- **Front-end:** Flutter (Dart) — one codebase → iOS + Android. FCM (`firebase_messaging`) for push nudges. `speech_to_text` + `flutter_tts` for voice.
 - **Backend / DB / Auth:** Supabase (Postgres + Auth + Edge Functions). RLS on, every row scoped to the signed-in user.
 - **AI:** OpenAI via the sponsor key. Keep the provider swappable behind an env var (`OPENAI_BASE_URL`, `OPENAI_MODEL`) so the key drops in with no code change. Never surface model/provider to the user.
-- **Nudge scheduling:** a Supabase Edge Function on a cron (e.g. every 5 min) that reads due `nudges` and delivers via Expo push. Proactive nudges are rows scheduled ahead of time.
+- **Nudge scheduling:** a Supabase Edge Function on a cron (e.g. every 5 min) that reads due `nudges` and delivers via FCM push. Proactive nudges are rows scheduled ahead of time.
 
 ---
 
@@ -383,16 +383,17 @@ _Homework / prep (finish today):_
 - [x] Product scoped + design direction locked (V2 Duo) — DONE
 - [x] 6-tab team brief artifact — DONE
 - [x] This build spec ready for handoff — DONE
-- [ ] [Bharat] confirm the two open decisions (§12): stack, and demo data/account
-- [ ] fold Zaasu (Z) learnings into §8.6
+- [x] stack decision — Flutter (§4, locked)
+- [x] fold Zaasu (Z) learnings into §8.6 — DONE
+- [ ] [Bharat] confirm the remaining open decision (§12): demo data / account
 - [ ] [All] read this spec end to end; agree the API shapes
 
 _Build the body (legal scaffolding, no product logic — finish today):_
-- [All] repo + folders + README (state the net-new boundary in the README)
+- [x] [All] repo + folders + README (net-new boundary stated in README) — DONE
 - [Merlin] Supabase project + the §6 migrations (empty tables)
 - [Merlin] API endpoint stubs from §7 returning mock data
-- [Bharat] front-end shell + V2 Duo design system; all screens static, wired to mock data
-- [Bharat] OpenAI wiring boilerplate + the extraction prompt (no judgment logic)
+- [x] [Bharat] front-end shell + V2 Duo design system; all screens static, wired to mock data — DONE (Load, Commit, Declined, Talk, Standing + nav)
+- [ ] [Bharat] OpenAI wiring boilerplate + the extraction prompt (no judgment logic)
 - [Maria] Google OAuth registered, read-only scopes; Calendar + Gmail connect working on our account
 - [Maria] Gmail/Calendar read → parsed test payloads (prove extraction, hold the shape)
 - [All] deploy green end to end (empty app loads on a real URL)
@@ -412,8 +413,8 @@ _Build the body (legal scaffolding, no product logic — finish today):_
 
 ## 12. Open decisions to confirm BEFORE kickoff
 
-1. **Stack:** Expo/React Native (assumed) vs Flutter. Pick one.
-2. **Whose data seeds the demo:** whose ChatGPT/Claude export + which Google account for Gmail/Calendar (one shared account is enough — do not build per-user Google auth for the demo).
+1. ~~**Stack:** Expo/React Native vs Flutter.~~ **RESOLVED — Flutter** (§4).
+2. **Whose data seeds the demo:** whose ChatGPT/Claude export + which Google account for Gmail/Calendar (one shared account is enough — do not build per-user Google auth for the demo). *(Still open — Bharat.)*
 
 ---
 
