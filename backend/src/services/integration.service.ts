@@ -57,19 +57,32 @@ export async function connectGoogle(
   return out;
 }
 
+/// Flips a provider on/off. The first "Connect" for a provider has no row yet,
+/// so this inserts rather than failing (the canonical schema has no unique
+/// (user_id, provider) index to upsert against).
 export async function setStatus(
   userId: string,
   provider: Provider,
   status: 'connected' | 'revoked',
 ): Promise<Integration> {
-  const { data, error } = await supabase
+  const { data: existing, error: findErr } = await supabase
     .from('integrations')
-    .update({ status })
+    .select('id')
     .eq('user_id', userId)
     .eq('provider', provider)
-    .select(PUBLIC)
     .maybeSingle();
+  if (findErr) throw new Error(findErr.message);
+
+  const query = existing
+    ? supabase.from('integrations').update({ status }).eq('id', existing.id)
+    : supabase.from('integrations').insert({
+        user_id: userId,
+        provider,
+        status,
+        connected_at: new Date().toISOString(),
+      });
+
+  const { data, error } = await query.select(PUBLIC).single();
   if (error) throw new Error(error.message);
-  if (!data) throw new Error('Integration not found');
   return data as Integration;
 }
