@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' show RTCVideoView;
 import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
 import '../services/realtime_voice_service.dart';
@@ -26,6 +27,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   final Map<String, _VTurn> _byId = {};
   String _state = 'connecting';
   bool _muted = false;
+  bool _audioReady = false;
 
   @override
   void initState() {
@@ -33,6 +35,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _rt
       ..onState = (s) {
         if (mounted) setState(() => _state = s);
+      }
+      ..onAudioReady = () {
+        if (mounted) setState(() => _audioReady = true);
       }
       ..onItem = (id, role) {
         if (!mounted) return;
@@ -104,7 +109,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final visible = _order.map((id) => _byId[id]!).where((t) => t.text.trim().isNotEmpty).toList();
+    // Keep user turns in their slot even before transcription resolves (shown as
+    // "…"), so a user turn never pops in above Anchor's reply out of order.
+    final visible = _order.map((id) => _byId[id]!).where((t) => t.role == 'user' || t.text.trim().isNotEmpty).toList();
     return Scaffold(
       backgroundColor: AnchorColors.scr,
       body: SafeArea(
@@ -113,6 +120,8 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // hidden: mounts the remote audio element so Anchor is audible on web
+              if (_audioReady) SizedBox(width: 1, height: 1, child: RTCVideoView(_rt.remoteRenderer)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -189,7 +198,7 @@ class _Bubble extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: AnchorBox.surface(bg: isAnchor ? AnchorColors.card : AnchorColors.accent, shadow: 3),
         child: Text(
-          turn.text,
+          turn.text.trim().isEmpty ? '…' : turn.text,
           style: TextStyle(fontSize: 14, height: 1.35, fontWeight: FontWeight.w600, color: isAnchor ? AnchorColors.ink : Colors.white),
         ),
       ),

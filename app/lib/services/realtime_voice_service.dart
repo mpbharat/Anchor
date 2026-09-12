@@ -12,6 +12,12 @@ class RealtimeVoice {
   MediaStream? _local;
   RTCDataChannel? _dc;
 
+  // Web needs the remote audio attached to a media element to play; a renderer
+  // does that. On native, audio auto-routes, but this is harmless there too.
+  final RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
+  bool _rendererReady = false;
+  void Function()? onAudioReady;
+
   void Function(String state)? onState; // connecting | live | ended | error
   // Item-ordered transcript so turns render in true conversation order even
   // though user transcription (whisper) resolves after Anchor starts replying.
@@ -33,6 +39,10 @@ class RealtimeVoice {
     try {
       onState?.call('connecting');
       await _api.ensureAuth();
+      if (!_rendererReady) {
+        await remoteRenderer.initialize();
+        _rendererReady = true;
+      }
 
       // 1. ephemeral key from our backend (seeded with persona + load)
       final sres = await http.post(
@@ -62,8 +72,13 @@ class RealtimeVoice {
           onState?.call('ended');
         }
       };
-      // remote audio plays automatically once the track arrives.
-      _pc!.onTrack = (_) {};
+      // attach the remote audio so it plays (essential on web).
+      _pc!.onTrack = (e) {
+        if (e.track.kind == 'audio' && e.streams.isNotEmpty) {
+          remoteRenderer.srcObject = e.streams.first;
+          onAudioReady?.call();
+        }
+      };
 
       // 3. mic
       _local = await navigator.mediaDevices.getUserMedia({'audio': true, 'video': false});
@@ -155,6 +170,11 @@ class RealtimeVoice {
       }
       await _local?.dispose();
       await _pc?.close();
+      remoteRenderer.srcObject = null;
+      if (_rendererReady) {
+        await remoteRenderer.dispose();
+        _rendererReady = false;
+      }
     } catch (_) {}
     _pc = null;
     _local = null;
