@@ -57,6 +57,7 @@ router.get('/judgments', asyncHandler(judge.listJudgments));
 router.get('/messages', asyncHandler(messages.list));
 router.post('/messages', validateBody(messages.addMessageSchema), asyncHandler(messages.add));
 router.post('/companion/web-search', validateBody(companion.webSearchSchema), asyncHandler(companion.webSearch));
+router.post('/companion/chat', validateBody(companion.chatSchema), asyncHandler(companion.chat));
 
 // Integrations & signals (Maria)
 router.get('/integrations', asyncHandler(integrations.list));

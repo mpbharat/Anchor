@@ -13,3 +13,13 @@ export async function webSearch(req: Request, res: Response): Promise<void> {
   const { query, numResults } = req.body;
   res.json({ results: await companion.webSearch(query, numResults) });
 }
+
+// POST /companion/chat — talk to Anchor (coach / counsellor / friend / accountability).
+// Grounds facts via Exa when useful; persists the turn + Anchor's reply.
+export const chatSchema = z.object({
+  message: z.string().min(1).max(4000),
+});
+
+export async function chat(req: Request, res: Response): Promise<void> {
+  res.status(201).json(await companion.chat(req.user!.id, req.body.message));
+}
