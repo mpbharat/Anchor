@@ -60,7 +60,8 @@
   .team{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px}
   .team .box{padding:18px}
   .team .role{font-size:13px;color:var(--dim);margin-top:4px}
-  .video-frame{border:2.5px solid var(--ink);border-radius:12px;box-shadow:6px 6px 0 var(--ink);overflow:hidden;aspect-ratio:16/9;background:var(--ink);display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px}
+  .video-frame{display:flex;align-items:center;justify-content:center}
+  .demo-video{max-height:680px;max-width:100%;height:auto;border:2.5px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);background:var(--ink);display:block}
   /* apple watch */
   .watch-wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px;align-items:center}
   .watch{width:210px;height:250px;margin:0 auto;background:#0a0a0a;border:3px solid var(--ink);border-radius:52px;box-shadow:8px 8px 0 var(--ink);padding:22px 18px;display:flex;flex-direction:column;justify-content:center}
@@ -174,11 +175,9 @@
   <h2>Two minutes, start to finish.</h2>
   <p class="sub" style="margin-bottom:22px">Make three commitments, get told no on the fourth, hold a live voice conversation, watch a nudge fire, then see the silence log and the weekly recap.</p>
   <div class="video-frame" id="video">
-    <div>
-      <div class="mono" style="font-size:12px;opacity:.7">VIDEO</div>
-      <div style="font-weight:900;font-size:20px;margin-top:8px">Demo link drops here</div>
-      <div style="opacity:.7;font-size:13px;margin-top:6px">Replace with the Loom / YouTube embed before submitting.</div>
-    </div>
+    <video class="demo-video" src="anchor-demo.mp4" controls playsinline preload="metadata">
+      Your browser does not support the video tag. <a href="anchor-demo.mp4">Watch the demo</a>.
+    </video>
   </div>
 </div></section>
 
