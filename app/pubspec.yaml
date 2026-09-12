@@ -15,7 +15,8 @@ dependencies:
   # voice — live duplex (OpenAI Realtime over WebRTC)
   flutter_webrtc: ^0.12.5
   # voice — fallback dictation / tts
-  speech_to_text: ^6.6.0
+  # 7.x required: 6.x's android/build.gradle calls jcenter(), which AGP 9 removed.
+  speech_to_text: ^7.0.0
   flutter_tts: ^4.0.2
   # push / nudges
   firebase_core: ^3.1.0

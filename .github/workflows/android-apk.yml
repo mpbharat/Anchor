@@ -19,6 +19,9 @@ on:
       - "app/**"
       - ".github/workflows/android-apk.yml"
 
+permissions:
+  contents: write # to publish the APK as a release asset
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -82,3 +85,17 @@ jobs:
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+
+      # Artifacts need auth to download; release assets on a public repo don't.
+      # A rolling "apk-latest" release makes the APK one curl away:
+      #   curl -L -o app-debug.apk \
+      #     https://github.com/mpbharat/Anchor/releases/download/apk-latest/app-debug.apk
+      - name: Publish APK to rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create apk-latest "${{ steps.apk.outputs.path }}" \
+            --title "Latest debug APK" \
+            --notes "Auto-built from ${GITHUB_SHA}. Install: adb install -r app-debug.apk" \
+            --prerelease
