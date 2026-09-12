@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api/anchor_api.dart';
@@ -33,8 +34,40 @@ class AnchorApp extends StatelessWidget {
 
 /// Decides between the sign-in screen and the app. Driven by the auth stream so
 /// signing out anywhere drops straight back here without manual navigation.
-class _AuthGate extends StatelessWidget {
+class _AuthGate extends StatefulWidget {
   const _AuthGate();
+
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  // Whether the one-time web auto sign-in has finished (or was not needed).
+  bool _autoDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeAutoDemo();
+  }
+
+  /// On the embedded web demo, open already signed in to the shared demo
+  /// account, the way the site behaved before real sign-in existed, so judges
+  /// land in the app, not on a login screen. Native still shows the sign-in
+  /// screen. This runs once: a manual sign-out is respected and does not bounce
+  /// straight back in (a page reload signs in fresh again).
+  Future<void> _maybeAutoDemo() async {
+    if (!kIsWeb || Supabase.instance.client.auth.currentSession != null) {
+      _autoDone = true;
+      return;
+    }
+    try {
+      await AnchorApi.instance.signIn(email: kDemoEmail, password: kDemoPassword);
+    } catch (_) {
+      // Fall through to the sign-in screen; the demo card there is one tap.
+    }
+    if (mounted) setState(() => _autoDone = true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +77,16 @@ class _AuthGate extends StatelessWidget {
         // Read the client rather than the event: on a cold start the stream has
         // not emitted yet, but a restored session is already available.
         final signedIn = Supabase.instance.client.auth.currentSession != null;
-        return signedIn ? const HomeShell() : const AuthScreen();
+        if (signedIn) return const HomeShell();
+        // While the one-time web auto sign-in is in flight, show a spinner
+        // instead of flashing the sign-in screen.
+        if (kIsWeb && !_autoDone) {
+          return const Scaffold(
+            backgroundColor: AnchorColors.scr,
+            body: Center(child: CircularProgressIndicator(color: AnchorColors.accent)),
+          );
+        }
+        return const AuthScreen();
       },
     );
   }
