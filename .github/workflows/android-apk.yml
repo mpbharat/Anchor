@@ -52,9 +52,20 @@ jobs:
         working-directory: app
         run: flutter create --platforms=android --project-name anchor .
 
+      # Logs need sign-in on this repo, but annotations are public — so on failure
+      # we surface the Gradle error as an ::error:: annotation for quick triage.
       - name: Build APK
         working-directory: app
-        run: flutter build apk --${{ github.event.inputs.build_type || 'debug' }}
+        run: |
+          set -o pipefail
+          if ! flutter build apk --${{ github.event.inputs.build_type || 'debug' }} 2>&1 | tee /tmp/build.log; then
+            echo "::group::Gradle failure (last 120 lines)"
+            tail -120 /tmp/build.log
+            echo "::endgroup::"
+            msg=$(tail -40 /tmp/build.log | tr -d '\r' | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=APK build failed::${msg}"
+            exit 1
+          fi
 
       - name: Locate APK
         id: apk
