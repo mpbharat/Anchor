@@ -49,7 +49,10 @@ export async function createSession(
         type: 'realtime',
         model: MODEL,
         instructions,
-        audio: { output: { voice: VOICE } },
+        audio: {
+          input: { transcription: { model: 'whisper-1' } },
+          output: { voice: VOICE },
+        },
       },
     }),
   });

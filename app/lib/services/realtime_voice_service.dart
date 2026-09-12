@@ -13,9 +13,19 @@ class RealtimeVoice {
   RTCDataChannel? _dc;
 
   void Function(String state)? onState; // connecting | live | ended | error
-  void Function(String text)? onCaption; // Anchor's live transcript
+  void Function(String text)? onUserFinal; // a completed user turn
+  void Function(String delta)? onAnchorDelta; // streaming Anchor text
+  void Function()? onAnchorDone; // Anchor finished a turn
 
-  String _caption = '';
+  bool _muted = false;
+  bool get isMuted => _muted;
+
+  void setMuted(bool m) {
+    _muted = m;
+    for (final t in _local?.getAudioTracks() ?? const []) {
+      t.enabled = !m;
+    }
+  }
 
   Future<void> connect() async {
     try {
@@ -87,11 +97,20 @@ class RealtimeVoice {
     try {
       final e = jsonDecode(raw) as Map<String, dynamic>;
       final type = e['type'] as String? ?? '';
-      if (type == 'response.output_audio_transcript.delta' || type == 'response.audio_transcript.delta') {
-        _caption += (e['delta'] as String? ?? '');
-        onCaption?.call(_caption);
-      } else if (type == 'response.created') {
-        _caption = '';
+      switch (type) {
+        case 'response.output_audio_transcript.delta':
+        case 'response.audio_transcript.delta':
+          onAnchorDelta?.call(e['delta'] as String? ?? '');
+          break;
+        case 'response.output_audio_transcript.done':
+        case 'response.audio_transcript.done':
+        case 'response.done':
+          onAnchorDone?.call();
+          break;
+        case 'conversation.item.input_audio_transcription.completed':
+          final t = (e['transcript'] as String? ?? '').trim();
+          if (t.isNotEmpty) onUserFinal?.call(t);
+          break;
       }
     } catch (_) {}
   }
