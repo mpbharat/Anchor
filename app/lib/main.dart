@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'theme/anchor_theme.dart';
-import 'widgets/anchor_chrome.dart';
+import 'services/voice_service.dart';
+import 'screens/talk_screen.dart';
 import 'screens/load_screen.dart';
-import 'screens/commit_screen.dart';
 import 'screens/standing_screen.dart';
 
-void main() => runApp(const AnchorApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  VoiceService.instance.init(); // warm up speech/tts
+  runApp(const AnchorApp());
+}
 
 class AnchorApp extends StatelessWidget {
   const AnchorApp({super.key});
@@ -20,9 +24,7 @@ class AnchorApp extends StatelessWidget {
   }
 }
 
-/// The three primary tabs — Load / Commit / Standing — with the persistent
-/// Talk-to-Anchor mic floating over all of them. Declined and Talk are pushed
-/// on top when they fire.
+/// Talk is the front door. Load and Standing are supporting views.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
   @override
@@ -31,18 +33,13 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
-
-  static const _tabs = [LoadScreen(), CommitScreen(), StandingScreen()];
+  static const _tabs = [TalkScreen(), LoadScreen(), StandingScreen()];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(child: IndexedStack(index: _index, children: _tabs)),
-      floatingActionButton: const TalkFab(),
-      bottomNavigationBar: _BottomNav(
-        index: _index,
-        onTap: (i) => setState(() => _index = i),
-      ),
+      bottomNavigationBar: _BottomNav(index: _index, onTap: (i) => setState(() => _index = i)),
     );
   }
 }
@@ -53,8 +50,8 @@ class _BottomNav extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   static const _items = [
+    (Icons.forum, 'TALK'),
     (Icons.dashboard, 'LOAD'),
-    (Icons.add_task, 'COMMIT'),
     (Icons.flag, 'STANDING'),
   ];
 
@@ -72,12 +69,7 @@ class _BottomNav extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             for (var i = 0; i < _items.length; i++)
-              _NavItem(
-                icon: _items[i].$1,
-                label: _items[i].$2,
-                selected: i == index,
-                onTap: () => onTap(i),
-              ),
+              _NavItem(icon: _items[i].$1, label: _items[i].$2, selected: i == index, onTap: () => onTap(i)),
           ],
         ),
       ),
@@ -86,12 +78,7 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
   final IconData icon;
   final String label;
   final bool selected;
@@ -108,9 +95,7 @@ class _NavItem extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 3),
-          Text(label,
-              style: TextStyle(
-                  fontFamily: 'monospace', fontSize: 9, fontWeight: FontWeight.w800, color: color)),
+          Text(label, style: TextStyle(fontFamily: 'monospace', fontSize: 9, fontWeight: FontWeight.w800, color: color)),
         ],
       ),
     );

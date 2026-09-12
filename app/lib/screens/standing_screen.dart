@@ -13,7 +13,7 @@ class StandingScreen extends StatelessWidget {
     final api = AnchorApi();
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-      child: FutureBuilder<WeeklyStanding>(
+      child: FutureBuilder<WeeklyStanding?>(
         future: api.standing(),
         builder: (context, snap) {
           final s = snap.data;

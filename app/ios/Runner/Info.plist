@@ -66,5 +66,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Dev: allow http to localhost so the app can reach the local Anchor backend. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Anchor uses the microphone so you can talk to it.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Anchor turns your speech into text so you can commit and check in by voice.</string>
 </dict>
 </plist>

@@ -1,81 +1,186 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+
+/// Backend URLs. Web (the public embed) hits the deployed Render backend; the
+/// iOS simulator hits the local dev backend.
+const String kAnchorRemoteUrl = 'https://anchor-qo9j.onrender.com';
+const String kAnchorLocalUrl = 'http://localhost:3000';
+
+/// Direct Supabase auth for the demo. The publishable key is client-safe by
+/// design; the demo account is a throwaway shared login for judges.
+const String kSupabaseUrl = 'https://kdpgslmbvyybulgashxz.supabase.co';
+const String kSupabasePublishableKey = 'sb_publishable_wM7ORk1nTD_uztKRQItXGg_nRbKbiV2';
+const String kDemoEmail = 'demo@anchor.app';
+const String kDemoPassword = 'anchor-demo-2026';
 
 /// Typed client for the Anchor API (see ANCHOR-BUILD-SPEC.md §7).
-/// TODAY: returns mock data so the front-end can be built against real shapes.
-/// EVENT DAY: point [baseUrl] at Merlin's backend and drop the mocks.
+/// Singleton so the auth token is shared across screens. For the demo it
+/// dev-logs in automatically; on the day this is replaced by real sign-in.
 class AnchorApi {
-  AnchorApi({this.baseUrl = ''});
-  final String baseUrl;
+  AnchorApi._();
+  static final AnchorApi instance = AnchorApi._();
+  factory AnchorApi() => instance;
 
-  /// GET /weeks/current/commitments
+  final String baseUrl = kIsWeb ? kAnchorRemoteUrl : kAnchorLocalUrl;
+  String? _token;
+
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (_token != null) 'Authorization': 'Bearer $_token',
+      };
+
+  /// Ensures we have a session by authenticating the demo account directly
+  /// against Supabase (works in production; independent of the backend's /auth).
+  Future<void> ensureAuth() async {
+    if (_token != null) return;
+    final res = await http.post(
+      Uri.parse('$kSupabaseUrl/auth/v1/token?grant_type=password'),
+      headers: {'apikey': kSupabasePublishableKey, 'Content-Type': 'application/json'},
+      body: jsonEncode({'email': kDemoEmail, 'password': kDemoPassword}),
+    );
+    if (res.statusCode == 200) {
+      _token = (jsonDecode(res.body) as Map<String, dynamic>)['access_token'] as String?;
+    }
+  }
+
+  /// GET /weeks/current/commitments — the Load.
   Future<List<Commitment>> currentCommitments() async {
-    // MOCK — replace with a real GET when the backend is live.
-    return const [
-      Commitment(position: 1, title: 'Ship the pricing revamp', status: 'on_record'),
-      Commitment(position: 2, title: 'Three gym sessions', status: 'due', progress: '1 of 3'),
-      Commitment(position: 3, title: 'Call Dad, Sunday', status: 'on_record'),
-    ];
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/weeks/current/commitments'), headers: _headers);
+    if (res.statusCode != 200) return const [];
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    final items = (data['commitments'] as List? ?? const []);
+    return items.map((c) => Commitment.fromJson(c as Map<String, dynamic>)).toList();
   }
 
-  /// POST /judge  → the "no" (event-day: real AI call)
+  /// GET the current load envelope (cap + loaded), for the gauge.
+  Future<Load> currentLoad() async {
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/weeks/current/commitments'), headers: _headers);
+    if (res.statusCode != 200) return const Load(cap: 4, loaded: 0, weekId: null);
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    return Load(
+      cap: (data['cap'] as num?)?.toInt() ?? 4,
+      loaded: (data['loaded'] as num?)?.toInt() ?? 0,
+      weekId: (data['week'] as Map<String, dynamic>?)?['id'] as String?,
+    );
+  }
+
+  /// POST /judge — the "no". Real AI decision, recorded server-side.
   Future<Judgment> judge(String request) async {
-    return const Judgment(
-      verdict: 'declined',
-      spoken:
-          "A newsletter sounds like it matters. Your call, but you're at four and behind on the gym. If it goes in, which comes out?",
-      weighedAgainst: ['Pricing', 'Gym', 'Dad', 'Sleep'],
+    await ensureAuth();
+    final res = await http.post(
+      Uri.parse('$baseUrl/judge'),
+      headers: _headers,
+      body: jsonEncode({'source': 'voice', 'request': request}),
+    );
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    return Judgment(
+      verdict: data['verdict'] as String? ?? 'declined',
+      spoken: data['spoken'] as String? ?? '',
+      weighedAgainst: ((data['weighed_against'] as List?) ?? const []).map((e) => e.toString()).toList(),
     );
   }
 
-  /// GET /conversations/current  → the running Talk transcript
+  /// POST /commitments — put something on the record (after Anchor allows it).
+  Future<bool> addCommitment(String title) async {
+    await ensureAuth();
+    final res = await http.post(
+      Uri.parse('$baseUrl/commitments'),
+      headers: _headers,
+      body: jsonEncode({'title': title, 'kind': 'oneoff', 'metric': 'boolean'}),
+    );
+    return res.statusCode == 201;
+  }
+
+  /// POST /companion/chat — talk to Anchor. Returns the reply text.
+  Future<String> chat(String message) async {
+    await ensureAuth();
+    final res = await http.post(
+      Uri.parse('$baseUrl/companion/chat'),
+      headers: _headers,
+      body: jsonEncode({'message': message}),
+    );
+    if (res.statusCode >= 400) return '';
+    return (jsonDecode(res.body) as Map<String, dynamic>)['reply'] as String? ?? '';
+  }
+
+  /// GET /messages — the Talk transcript.
   Future<List<Turn>> conversation() async {
-    // MOCK — the always-on companion's last few turns.
-    return const [
-      Turn(role: 'anchor', text: "You've kept the gym once this week. Sunday's open, lock it in now?"),
-      Turn(role: 'user', text: "Yeah, Sunday morning works."),
-      Turn(role: 'anchor', text: "Done. If it rains, you said you'd do the 20-minute home set instead. Still good?"),
-      Turn(role: 'user', text: "Still good."),
-    ];
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/messages'), headers: _headers);
+    if (res.statusCode != 200) return const [];
+    final msgs = (jsonDecode(res.body) as Map<String, dynamic>)['messages'] as List? ?? const [];
+    return msgs.map((m) => Turn(role: (m['role'] as String) == 'anchor' ? 'anchor' : 'user', text: m['content'] as String? ?? '')).toList();
   }
 
-  /// GET /weeks/current/standing  → the end-of-week review
-  Future<WeeklyStanding> standing() async {
-    return const WeeklyStanding(
-      keptCount: 2,
-      totalCount: 3,
-      anchorMessage:
-          "Two of three. The gym slipped once, that's one week, not who you are. Same three next week, or swap one?",
-      items: [
-        StandingItem(title: 'Ship the pricing revamp', outcome: 'kept'),
-        StandingItem(title: 'Call Dad, Sunday', outcome: 'kept'),
-        StandingItem(title: 'Three gym sessions', outcome: 'missed', note: 'forgiven · carried'),
-      ],
+  /// GET /weeks/:id/review — the weekly standing.
+  Future<WeeklyStanding?> standing() async {
+    await ensureAuth();
+    final load = await currentLoad();
+    if (load.weekId == null) return null;
+    final res = await http.get(Uri.parse('$baseUrl/weeks/${load.weekId}/review'), headers: _headers);
+    if (res.statusCode != 200) return null;
+    final d = jsonDecode(res.body) as Map<String, dynamic>;
+    final items = ((d['commitments'] as List?) ?? const []).map((c) {
+      final m = c as Map<String, dynamic>;
+      final status = m['status'] as String? ?? '';
+      final cur = (m['current_value'] as num?)?.toDouble() ?? 0;
+      final tgt = (m['target_value'] as num?)?.toDouble() ?? 0;
+      final kept = status == 'done' || (tgt > 0 && cur >= tgt);
+      return StandingItem(
+        title: m['title'] as String? ?? '',
+        outcome: kept ? 'kept' : (status == 'carried' ? 'missed' : 'missed'),
+        note: status == 'carried' ? 'forgiven · carried' : null,
+      );
+    }).toList();
+    return WeeklyStanding(
+      keptCount: (d['kept_count'] as num?)?.toInt() ?? 0,
+      totalCount: (d['total_count'] as num?)?.toInt() ?? items.length,
+      anchorMessage: d['anchor_message'] as String? ?? '',
+      items: items,
     );
   }
+}
+
+class Load {
+  final int cap;
+  final int loaded;
+  final String? weekId;
+  const Load({required this.cap, required this.loaded, required this.weekId});
 }
 
 class Commitment {
   final int position;
   final String title;
-  final String status; // on_record | due | done | carried | dropped
+  final String status;
   final String? progress;
-  const Commitment({
-    required this.position,
-    required this.title,
-    required this.status,
-    this.progress,
-  });
+  const Commitment({required this.position, required this.title, required this.status, this.progress});
+
+  factory Commitment.fromJson(Map<String, dynamic> j) {
+    final cur = (j['current_value'] as num?)?.toDouble() ?? 0;
+    final tgt = (j['target_value'] as num?)?.toDouble() ?? 0;
+    final metric = j['metric'] as String?;
+    String? progress;
+    if (metric == 'count' && tgt > 1) {
+      progress = '${cur.toInt()} of ${tgt.toInt()}';
+    }
+    return Commitment(
+      position: (j['position'] as num?)?.toInt() ?? 0,
+      title: j['title'] as String? ?? '',
+      status: j['status'] as String? ?? 'on_record',
+      progress: progress,
+    );
+  }
 }
 
 class Judgment {
   final String verdict; // declined | allowed | swapped | nudge | stay_silent
   final String spoken;
   final List<String> weighedAgainst;
-  const Judgment({
-    required this.verdict,
-    required this.spoken,
-    required this.weighedAgainst,
-  });
+  const Judgment({required this.verdict, required this.spoken, required this.weighedAgainst});
 }
 
 class Turn {
@@ -89,12 +194,7 @@ class WeeklyStanding {
   final int totalCount;
   final String anchorMessage;
   final List<StandingItem> items;
-  const WeeklyStanding({
-    required this.keptCount,
-    required this.totalCount,
-    required this.anchorMessage,
-    required this.items,
-  });
+  const WeeklyStanding({required this.keptCount, required this.totalCount, required this.anchorMessage, required this.items});
 }
 
 class StandingItem {
