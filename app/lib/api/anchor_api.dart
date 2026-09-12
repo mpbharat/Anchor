@@ -31,6 +31,9 @@ class AnchorApi {
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
 
+  /// Auth headers for callers that need to hit the backend directly (realtime).
+  Map<String, String> get authHeaders => _headers;
+
   /// Ensures we have a session by authenticating the demo account directly
   /// against Supabase (works in production; independent of the backend's /auth).
   Future<void> ensureAuth() async {

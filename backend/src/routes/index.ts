@@ -15,6 +15,7 @@ import * as witnesses from '../controllers/witness.controller';
 import * as messages from '../controllers/message.controller';
 import * as pushTokens from '../controllers/pushtoken.controller';
 import * as companion from '../controllers/companion.controller';
+import * as realtime from '../controllers/realtime.controller';
 
 // Paths match ANCHOR-BUILD-SPEC.md §7 exactly (no /api prefix).
 const router = Router();
@@ -58,6 +59,7 @@ router.get('/messages', asyncHandler(messages.list));
 router.post('/messages', validateBody(messages.addMessageSchema), asyncHandler(messages.add));
 router.post('/companion/web-search', validateBody(companion.webSearchSchema), asyncHandler(companion.webSearch));
 router.post('/companion/chat', validateBody(companion.chatSchema), asyncHandler(companion.chat));
+router.post('/realtime/session', asyncHandler(realtime.session));
 
 // Integrations & signals (Maria)
 router.get('/integrations', asyncHandler(integrations.list));

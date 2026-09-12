@@ -4,6 +4,7 @@ import '../api/anchor_api.dart';
 import '../services/voice_service.dart';
 import '../widgets/anchor_chrome.dart';
 import 'commit_sheet.dart';
+import 'voice_call_screen.dart';
 
 /// Talk — the home screen and front door. Anchor is a conversation first:
 /// you talk to it (type or voice), it references your load, pushes back, and
@@ -95,6 +96,11 @@ class _TalkScreenState extends State<TalkScreen> {
     _bootstrap(); // refresh load label after a commitment lands
   }
 
+  Future<void> _openCall() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VoiceCallScreen()));
+    _bootstrap(); // refresh transcript + load after a voice session
+  }
+
   @override
   void dispose() {
     _input.dispose();
@@ -111,17 +117,33 @@ class _TalkScreenState extends State<TalkScreen> {
         children: [
           AnchorHeader(trailing: _loadLabel.isEmpty ? null : AnchorBadge(_loadLabel)),
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: _openCommit,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 8, shadow: 3),
-                child: const Text('+ COMMIT TO SOMETHING',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: _openCommit,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 8, shadow: 3),
+                  child: const Text('+ COMMIT TO SOMETHING',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
+                ),
               ),
-            ),
+              GestureDetector(
+                onTap: _openCall,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: AnchorBox.surface(bg: AnchorColors.card, radius: 8, shadow: 3),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.graphic_eq, size: 14, color: AnchorColors.ink),
+                      SizedBox(width: 5),
+                      Text('VOICE', style: TextStyle(color: AnchorColors.ink, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Expanded(

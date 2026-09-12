@@ -12,7 +12,9 @@ dependencies:
   # backend / auth
   supabase_flutter: ^2.5.0
   http: ^1.2.0
-  # voice (event-day wiring)
+  # voice — live duplex (OpenAI Realtime over WebRTC)
+  flutter_webrtc: ^0.12.5
+  # voice — fallback dictation / tts
   speech_to_text: ^6.6.0
   flutter_tts: ^4.0.2
   # push / nudges
