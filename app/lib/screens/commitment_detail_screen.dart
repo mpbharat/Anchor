@@ -110,7 +110,7 @@ class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
                     Text(c.title, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, height: 1.2)),
                     const SizedBox(height: 20),
                     if (c.metric == 'count' && c.targetValue > 0) ...[
-                      Text('PROGRESS · ${c.currentValue.toInt()} OF ${c.targetValue.toInt()}',
+                      Text('PROGRESS · ${c.currentValue.toInt()} OF ${c.targetValue.toInt()} · ${((c.currentValue / c.targetValue) * 100).round()}%',
                           style: const TextStyle(fontFamily: 'monospace', fontSize: 10, fontWeight: FontWeight.w700, color: AnchorColors.dim)),
                       const SizedBox(height: 8),
                       _ProgressBar(value: c.targetValue == 0 ? 0 : (c.currentValue / c.targetValue).clamp(0, 1)),
@@ -118,15 +118,35 @@ class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
                     ],
                     const Spacer(),
                     if (!c.isDone) ...[
-                      if (c.metric == 'count')
-                        _ActionButton(
-                          label: '+1 PROGRESS',
-                          bg: AnchorColors.energy,
-                          fg: AnchorColors.ink,
-                          busy: _busy,
-                          onTap: () => _do(() => _api.checkin(c.id, kind: 'progress', value: 1)),
+                      if (c.metric == 'count') ...[
+                        const Text('LOG PROGRESS',
+                            style: TextStyle(fontFamily: 'monospace', fontSize: 10, fontWeight: FontWeight.w700, color: AnchorColors.dim)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ActionButton(
+                                label: '– 1',
+                                bg: AnchorColors.card,
+                                fg: c.currentValue <= 0 ? AnchorColors.dim : AnchorColors.ink,
+                                busy: _busy || c.currentValue <= 0,
+                                onTap: () => _do(() => _api.checkin(c.id, kind: 'progress', value: -1)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _ActionButton(
+                                label: '+ 1',
+                                bg: AnchorColors.energy,
+                                fg: AnchorColors.ink,
+                                busy: _busy,
+                                onTap: () => _do(() => _api.checkin(c.id, kind: 'progress', value: 1)),
+                              ),
+                            ),
+                          ],
                         ),
-                      if (c.metric == 'count') const SizedBox(height: 10),
+                        const SizedBox(height: 10),
+                      ],
                       _ActionButton(
                         label: 'MARK DONE',
                         bg: AnchorColors.ok,

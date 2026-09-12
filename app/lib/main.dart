@@ -50,9 +50,9 @@ class _BottomNav extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   static const _items = [
-    (Icons.forum, 'TALK'),
-    (Icons.dashboard, 'FOCUS'),
-    (Icons.flag, 'STANDING'),
+    (Icons.forum_rounded, 'TALK'),
+    (Icons.checklist_rounded, 'FOCUS'),
+    (Icons.insights_rounded, 'RECAP'),
   ];
 
   @override
@@ -62,14 +62,15 @@ class _BottomNav extends StatelessWidget {
         color: AnchorColors.card,
         border: Border(top: BorderSide(color: AnchorColors.ink, width: 2.5)),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: SafeArea(
         top: false,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             for (var i = 0; i < _items.length; i++)
-              _NavItem(icon: _items[i].$1, label: _items[i].$2, selected: i == index, onTap: () => onTap(i)),
+              Expanded(
+                child: _NavItem(icon: _items[i].$1, label: _items[i].$2, selected: i == index, onTap: () => onTap(i)),
+              ),
           ],
         ),
       ),
@@ -86,17 +87,31 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AnchorColors.accent : AnchorColors.dim;
+    final fg = selected ? Colors.white : AnchorColors.ink;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 3),
-          Text(label, style: TextStyle(fontFamily: 'monospace', fontSize: 9, fontWeight: FontWeight.w800, color: color)),
-        ],
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: selected
+            ? BoxDecoration(
+                color: AnchorColors.accent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AnchorColors.ink, width: 2.5),
+                boxShadow: const [BoxShadow(color: AnchorColors.ink, offset: Offset(3, 3), blurRadius: 0)],
+              )
+            : null,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: fg, size: 20),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              Text(label, style: const TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+            ],
+          ],
+        ),
       ),
     );
   }
