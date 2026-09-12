@@ -95,6 +95,34 @@ class AnchorApi {
     return res.statusCode == 201;
   }
 
+  /// GET /commitments/:id — one commitment's detail.
+  Future<Commitment?> commitment(String id) async {
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/commitments/$id'), headers: _headers);
+    if (res.statusCode != 200) return null;
+    final d = jsonDecode(res.body) as Map<String, dynamic>;
+    final c = (d['commitment'] as Map<String, dynamic>?) ?? d;
+    return Commitment.fromJson(c);
+  }
+
+  /// PUT /commitments/:id/checkin — log progress or mark done/miss.
+  Future<bool> checkin(String id, {required String kind, double? value}) async {
+    await ensureAuth();
+    final res = await http.put(
+      Uri.parse('$baseUrl/commitments/$id/checkin'),
+      headers: _headers,
+      body: jsonEncode({'kind': kind, if (value != null) 'value': value}),
+    );
+    return res.statusCode < 300;
+  }
+
+  /// DELETE /commitments/:id — drop a commitment.
+  Future<bool> deleteCommitment(String id) async {
+    await ensureAuth();
+    final res = await http.delete(Uri.parse('$baseUrl/commitments/$id'), headers: _headers);
+    return res.statusCode < 300;
+  }
+
   /// POST /companion/chat — talk to Anchor. Returns the reply text.
   Future<String> chat(String message) async {
     await ensureAuth();
@@ -153,27 +181,47 @@ class Load {
 }
 
 class Commitment {
+  final String id;
   final int position;
   final String title;
-  final String status;
-  final String? progress;
-  const Commitment({required this.position, required this.title, required this.status, this.progress});
+  final String status; // on_record | due | done | carried | dropped
+  final String metric; // boolean | count | amount
+  final double currentValue;
+  final double targetValue;
+  final String? unit;
+  final String? period; // week | month
+  final String? kind; // oneoff | recurring | budget
+  const Commitment({
+    required this.id,
+    required this.position,
+    required this.title,
+    required this.status,
+    this.metric = 'boolean',
+    this.currentValue = 0,
+    this.targetValue = 0,
+    this.unit,
+    this.period,
+    this.kind,
+  });
 
-  factory Commitment.fromJson(Map<String, dynamic> j) {
-    final cur = (j['current_value'] as num?)?.toDouble() ?? 0;
-    final tgt = (j['target_value'] as num?)?.toDouble() ?? 0;
-    final metric = j['metric'] as String?;
-    String? progress;
-    if (metric == 'count' && tgt > 1) {
-      progress = '${cur.toInt()} of ${tgt.toInt()}';
-    }
-    return Commitment(
-      position: (j['position'] as num?)?.toInt() ?? 0,
-      title: j['title'] as String? ?? '',
-      status: j['status'] as String? ?? 'on_record',
-      progress: progress,
-    );
-  }
+  /// "1 of 3" for counts; null for simple boolean commitments.
+  String? get progress =>
+      (metric == 'count' && targetValue > 1) ? '${currentValue.toInt()} of ${targetValue.toInt()}' : null;
+
+  bool get isDone => status == 'done' || (targetValue > 0 && currentValue >= targetValue);
+
+  factory Commitment.fromJson(Map<String, dynamic> j) => Commitment(
+        id: j['id'] as String? ?? '',
+        position: (j['position'] as num?)?.toInt() ?? 0,
+        title: j['title'] as String? ?? '',
+        status: j['status'] as String? ?? 'on_record',
+        metric: j['metric'] as String? ?? 'boolean',
+        currentValue: (j['current_value'] as num?)?.toDouble() ?? 0,
+        targetValue: (j['target_value'] as num?)?.toDouble() ?? 0,
+        unit: j['unit'] as String?,
+        period: j['period'] as String?,
+        kind: j['kind'] as String?,
+      );
 }
 
 class Judgment {

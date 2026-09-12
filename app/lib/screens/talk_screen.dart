@@ -44,7 +44,7 @@ class _TalkScreenState extends State<TalkScreen> {
           text: "I'm Anchor. I help you hold to a few things and say no to the rest. What are you taking on this week?",
         ));
       }
-      _loadLabel = 'LOADED ${load.loaded}/${load.cap}';
+      _loadLabel = 'FOCUS ${load.loaded}/${load.cap}';
     });
     _scrollDown();
   }

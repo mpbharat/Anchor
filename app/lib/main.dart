@@ -51,7 +51,7 @@ class _BottomNav extends StatelessWidget {
 
   static const _items = [
     (Icons.forum, 'TALK'),
-    (Icons.dashboard, 'LOAD'),
+    (Icons.dashboard, 'FOCUS'),
     (Icons.flag, 'STANDING'),
   ];
 
