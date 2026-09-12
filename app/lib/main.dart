@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'theme/anchor_theme.dart';
-import 'services/voice_service.dart';
 import 'screens/talk_screen.dart';
 import 'screens/load_screen.dart';
 import 'screens/standing_screen.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  VoiceService.instance.init(); // warm up speech/tts
-  runApp(const AnchorApp());
-}
+void main() => runApp(const AnchorApp());
 
 class AnchorApp extends StatelessWidget {
   const AnchorApp({super.key});
@@ -62,9 +57,10 @@ class _BottomNav extends StatelessWidget {
         color: AnchorColors.card,
         border: Border(top: BorderSide(color: AnchorColors.ink, width: 2.5)),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
       child: SafeArea(
         top: false,
+        minimum: const EdgeInsets.only(bottom: 6),
         child: Row(
           children: [
             for (var i = 0; i < _items.length; i++)

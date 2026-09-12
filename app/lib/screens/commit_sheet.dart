@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
-import '../services/voice_service.dart';
 import 'declined_screen.dart';
 
 /// Capture a commitment (type or voice), run it past Anchor. Allowed -> it goes
@@ -23,23 +22,8 @@ class _CommitSheet extends StatefulWidget {
 
 class _CommitSheetState extends State<_CommitSheet> {
   final _api = AnchorApi();
-  final _voice = VoiceService.instance;
   final _title = TextEditingController();
-  bool _listening = false;
   bool _asking = false;
-
-  Future<void> _toggleMic() async {
-    if (_listening) {
-      await _voice.stop();
-      setState(() => _listening = false);
-      return;
-    }
-    final ok = await _voice.listen(
-      onPartial: (t) => setState(() => _title.text = t),
-      onFinal: (_) => setState(() => _listening = false),
-    );
-    setState(() => _listening = ok);
-  }
 
   Future<void> _ask() async {
     final text = _title.text.trim();
@@ -87,35 +71,25 @@ class _CommitSheetState extends State<_CommitSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: _toggleMic,
-                  child: Container(
-                    width: 48, height: 48, alignment: Alignment.center,
-                    decoration: AnchorBox.surface(bg: _listening ? AnchorColors.alert : AnchorColors.card, radius: 10, shadow: 3),
-                    child: Icon(_listening ? Icons.stop : Icons.mic, color: _listening ? Colors.white : AnchorColors.ink),
-                  ),
+            Container(
+              decoration: AnchorBox.surface(radius: 10, shadow: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: TextField(
+                controller: _title,
+                autofocus: true,
+                minLines: 1,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Write the launch newsletter',
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Container(
-                    decoration: AnchorBox.surface(radius: 10, shadow: 3),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: TextField(
-                      controller: _title,
-                      autofocus: true,
-                      minLines: 1, maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: _listening ? 'Listening…' : 'e.g. Write the launch newsletter',
-                        border: InputBorder.none, isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
+            const SizedBox(height: 4),
+            const Text('Type it, or use the voice button on Talk.',
+                style: TextStyle(fontSize: 12, color: AnchorColors.dim)),
             const SizedBox(height: 14),
             GestureDetector(
               onTap: _ask,

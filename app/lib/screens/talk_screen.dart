@@ -42,10 +42,13 @@ class _TalkScreenState extends State<TalkScreen> {
         ..clear()
         ..addAll(history);
       if (_turns.isEmpty) {
-        _turns.add(const Turn(
-          role: 'anchor',
-          text: "I'm Anchor. I help you hold to a few things and say no to the rest. What are you taking on this week?",
-        ));
+        // A short scripted opener so the screen is alive, not blank. Real turns
+        // append after these; on the shared web demo it resets to this each load.
+        _turns.addAll(const [
+          Turn(role: 'anchor', text: "I'm Anchor. I help you hold to a few things and say no to the rest."),
+          Turn(role: 'user', text: "How's my week looking?"),
+          Turn(role: 'anchor', text: "You're at four: pricing revamp, three gym sessions, dining under 1,000 AED, and calling Dad. That's a full plate, so I'd guard it before you add anything."),
+        ]);
       }
       _loadLabel = 'FOCUS ${load.loaded}/${load.cap}';
     });

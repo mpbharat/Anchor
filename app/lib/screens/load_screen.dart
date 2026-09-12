@@ -16,6 +16,7 @@ class _LoadScreenState extends State<LoadScreen> {
   final _api = AnchorApi();
   late Future<List<Commitment>> _commitments;
   late Future<Load> _load;
+  String? _expanded;
 
   @override
   void initState() {
@@ -61,15 +62,20 @@ class _LoadScreenState extends State<LoadScreen> {
                 return ListView.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 9),
-                  itemBuilder: (_, i) => _PlateTile(
-                    items[i],
-                    onTap: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => CommitmentDetailScreen(id: items[i].id)),
-                      );
-                      _refresh();
-                    },
-                  ),
+                  itemBuilder: (_, i) {
+                    final c = items[i];
+                    return _PlateTile(
+                      c,
+                      expanded: _expanded == c.id,
+                      onTap: () => setState(() => _expanded = _expanded == c.id ? null : c.id),
+                      onOpen: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => CommitmentDetailScreen(id: c.id)),
+                        );
+                        _refresh();
+                      },
+                    );
+                  },
                 );
               },
             ),
@@ -119,47 +125,133 @@ class _FocusGauge extends StatelessWidget {
 }
 
 class _PlateTile extends StatelessWidget {
-  const _PlateTile(this.c, {required this.onTap});
+  const _PlateTile(this.c, {required this.expanded, required this.onTap, required this.onOpen});
   final Commitment c;
+  final bool expanded;
   final VoidCallback onTap;
+  final VoidCallback onOpen;
+
+  String get _statusLabel {
+    if (c.isDone) return 'DONE';
+    if (c.status == 'due') return 'DUE';
+    if (c.status == 'carried') return 'CARRIED';
+    return 'ON RECORD';
+  }
+
+  String get _cadence {
+    if (c.period == 'week') return 'this week';
+    if (c.period == 'month') return 'this month';
+    if (c.kind == 'oneoff') return 'one-off';
+    return '';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(11),
-        decoration: AnchorBox.surface(),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              color: c.isDone ? AnchorColors.ok : AnchorColors.ink,
-              child: Text(
-                c.isDone ? '✓' : c.position.toString().padLeft(2, '0'),
-                style: const TextStyle(fontFamily: 'monospace', color: Colors.white, fontWeight: FontWeight.w800, fontSize: 10),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: AnchorBox.surface(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(11),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(c.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                  if (c.progress != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(c.progress!.toUpperCase(),
-                          style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: AnchorColors.dim)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    color: c.isDone ? AnchorColors.ok : AnchorColors.ink,
+                    child: Text(
+                      c.isDone ? '✓' : c.position.toString().padLeft(2, '0'),
+                      style: const TextStyle(fontFamily: 'monospace', color: Colors.white, fontWeight: FontWeight.w800, fontSize: 10),
                     ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(c.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                        if (c.progress != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(c.progress!.toUpperCase(),
+                                style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: AnchorColors.dim)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(expanded ? Icons.expand_less : Icons.expand_more, color: AnchorColors.dim),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AnchorColors.dim),
-          ],
-        ),
+          ),
+          if (expanded)
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AnchorColors.ink, width: 2)),
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: AnchorBox.surface(
+                            bg: c.isDone ? AnchorColors.ok : (c.status == 'due' ? AnchorColors.energy : AnchorColors.accent),
+                            radius: 6,
+                            shadow: 0),
+                        child: Text(_statusLabel,
+                            style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: c.isDone || c.status == 'due' ? AnchorColors.ink : Colors.white)),
+                      ),
+                      if (_cadence.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Text(_cadence.toUpperCase(),
+                            style: const TextStyle(fontFamily: 'monospace', fontSize: 9, fontWeight: FontWeight.w700, color: AnchorColors.dim)),
+                      ],
+                    ],
+                  ),
+                  if (c.metric == 'count' && c.targetValue > 0) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        height: 14,
+                        decoration: BoxDecoration(border: Border.all(color: AnchorColors.ink, width: 2), borderRadius: BorderRadius.circular(4)),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: (c.currentValue / c.targetValue).clamp(0, 1),
+                          child: Container(color: AnchorColors.energy),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${c.currentValue.toInt()} of ${c.targetValue.toInt()} · ${((c.currentValue / c.targetValue) * 100).round()}%',
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: AnchorColors.dim)),
+                  ],
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: onOpen,
+                    child: Container(
+                      height: 42,
+                      alignment: Alignment.center,
+                      decoration: AnchorBox.surface(bg: AnchorColors.accent, shadow: 3),
+                      child: const Text('OPEN · UPDATE OR DROP',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
