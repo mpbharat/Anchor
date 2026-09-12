@@ -71,6 +71,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   Future<void> _end() async {
     await _rt.disconnect();
+    _api.reflect(); // learn from this conversation (fire-and-forget)
     if (mounted) Navigator.of(context).maybePop();
   }
 

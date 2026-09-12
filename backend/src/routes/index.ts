@@ -59,6 +59,7 @@ router.get('/messages', asyncHandler(messages.list));
 router.post('/messages', validateBody(messages.addMessageSchema), asyncHandler(messages.add));
 router.post('/companion/web-search', validateBody(companion.webSearchSchema), asyncHandler(companion.webSearch));
 router.post('/companion/chat', validateBody(companion.chatSchema), asyncHandler(companion.chat));
+router.post('/companion/reflect', asyncHandler(companion.reflect));
 router.post('/realtime/session', asyncHandler(realtime.session));
 
 // Integrations & signals (Maria)

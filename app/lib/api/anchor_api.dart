@@ -149,6 +149,15 @@ class AnchorApi {
     );
   }
 
+  /// POST /companion/reflect — debounced: update durable memory from the
+  /// recent conversation. Fire-and-forget on session boundaries.
+  Future<void> reflect() async {
+    await ensureAuth();
+    try {
+      await http.post(Uri.parse('$baseUrl/companion/reflect'), headers: _headers);
+    } catch (_) {}
+  }
+
   /// GET /messages — the Talk transcript.
   Future<List<Turn>> conversation() async {
     await ensureAuth();

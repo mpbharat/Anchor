@@ -21,6 +21,7 @@ class _TalkScreenState extends State<TalkScreen> {
   final List<Turn> _turns = [];
   bool _sending = false;
   String _loadLabel = '';
+  int _sinceReflect = 0;
 
   @override
   void initState() {
@@ -69,6 +70,11 @@ class _TalkScreenState extends State<TalkScreen> {
       _sending = false;
     });
     _scrollDown();
+    // debounced reflection: learn from the conversation every few turns
+    if (++_sinceReflect >= 5) {
+      _sinceReflect = 0;
+      _api.reflect();
+    }
   }
 
   Future<void> _openCommit() async {
