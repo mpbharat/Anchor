@@ -34,6 +34,7 @@ router.put('/settings', validateBody(users.updateSettingsSchema), asyncHandler(u
 
 // Import & load (Maria)
 router.post('/users/:id/patterns', validateBody(users.importPatternsSchema), asyncHandler(users.importPatterns));
+router.post('/users/:id/patterns/extract', validateBody(users.extractPatternsSchema), asyncHandler(users.extractPatterns));
 router.get('/users/:id/patterns', asyncHandler(users.getPatterns));
 router.delete('/users/:id/patterns', asyncHandler(users.clearPatterns));
 router.get('/users/:id/load', asyncHandler(users.getLoad));

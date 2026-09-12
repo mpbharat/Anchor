@@ -11,7 +11,7 @@ export const connectGoogleSchema = z.object({
 });
 
 export const statusSchema = z.object({
-  provider: z.enum(['google_calendar', 'gmail']),
+  provider: z.enum(['google_calendar', 'gmail', 'notifications']),
   status: z.enum(['connected', 'revoked']),
 });
 

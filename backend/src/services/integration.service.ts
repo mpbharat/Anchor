@@ -3,7 +3,9 @@ import { supabase } from '../config/supabase';
 // integrations (canonical): provider google_calendar|gmail, tokens stored (encrypt
 // at rest in production), status connected|revoked. No unique(user_id,provider) in
 // the canonical schema, so replace manually per provider.
-export type Provider = 'google_calendar' | 'gmail';
+// 'notifications' is device-local (the Connect screen's third card) — no OAuth,
+// just a stored on/off so the app and the nudge scheduler agree.
+export type Provider = 'google_calendar' | 'gmail' | 'notifications';
 
 export interface Integration {
   id: string;

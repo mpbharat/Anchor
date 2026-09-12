@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as userService from '../services/user.service';
 import * as patternService from '../services/pattern.service';
 import * as signalService from '../services/signal.service';
+import * as extractService from '../services/extract.service';
 import { forbidden } from '../utils/errors';
 
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected HH:MM');
@@ -86,6 +87,20 @@ export async function updateSettings(req: Request, res: Response): Promise<void>
 export async function importPatterns(req: Request, res: Response): Promise<void> {
   const userId = resolveUserId(req);
   const patterns = await patternService.upsertUserPatterns(userId, req.body);
+  res.status(201).json({ patterns });
+}
+
+// POST /users/:id/patterns/extract — the Import screen's "Extract" button.
+// Takes the raw paste from ChatGPT/Claude and structures it into user_patterns.
+export const extractPatternsSchema = z.object({
+  source: z.enum(['chatgpt', 'claude', 'upload', 'fresh']).default('chatgpt'),
+  raw_text: z.string().min(1).max(200_000),
+});
+
+export async function extractPatterns(req: Request, res: Response): Promise<void> {
+  const userId = resolveUserId(req);
+  const { source, raw_text } = req.body;
+  const patterns = await extractService.extractAndStore(userId, { source, raw_text });
   res.status(201).json({ patterns });
 }
 

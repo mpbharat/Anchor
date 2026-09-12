@@ -194,6 +194,110 @@ class AnchorApi {
       items: items,
     );
   }
+
+  // ---- Import (screen 7) ------------------------------------------------
+
+  /// POST /users/me/patterns/extract — send the pasted reply; the backend
+  /// structures it into user_patterns (via OpenAI) and stores it.
+  Future<ImportedProfile?> extractPatterns({
+    required String source,
+    required String rawText,
+  }) async {
+    await ensureAuth();
+    final res = await http.post(
+      Uri.parse('$baseUrl/users/me/patterns/extract'),
+      headers: _headers,
+      body: jsonEncode({'source': source, 'raw_text': rawText}),
+    );
+    if (res.statusCode >= 300) return null;
+    final p = (jsonDecode(res.body) as Map<String, dynamic>)['patterns'] as Map<String, dynamic>?;
+    return p == null ? null : ImportedProfile.fromJson(p);
+  }
+
+  /// GET /users/me/patterns — what Anchor already learned (null if never imported).
+  Future<ImportedProfile?> patterns() async {
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/users/me/patterns'), headers: _headers);
+    if (res.statusCode != 200) return null;
+    final p = (jsonDecode(res.body) as Map<String, dynamic>)['patterns'] as Map<String, dynamic>?;
+    return p == null ? null : ImportedProfile.fromJson(p);
+  }
+
+  /// DELETE /users/me/patterns — "stay fresh": start with a blank slate.
+  Future<bool> clearPatterns() async {
+    await ensureAuth();
+    final res = await http.delete(Uri.parse('$baseUrl/users/me/patterns'), headers: _headers);
+    return res.statusCode < 300;
+  }
+
+  // ---- Connect (screen 8) -----------------------------------------------
+
+  /// GET /integrations — which providers are connected.
+  Future<Map<String, String>> integrations() async {
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/integrations'), headers: _headers);
+    if (res.statusCode != 200) return {};
+    final list = (jsonDecode(res.body) as Map<String, dynamic>)['integrations'] as List? ?? const [];
+    return {
+      for (final i in list)
+        (i as Map<String, dynamic>)['provider'] as String: i['status'] as String? ?? 'revoked',
+    };
+  }
+
+  /// PUT /integrations/status — flip a provider connected/revoked.
+  /// Read-only scopes; real OAuth is a config swap for the demo.
+  Future<bool> setIntegration(String provider, {required bool connected}) async {
+    await ensureAuth();
+    final res = await http.put(
+      Uri.parse('$baseUrl/integrations/status'),
+      headers: _headers,
+      body: jsonEncode({'provider': provider, 'status': connected ? 'connected' : 'revoked'}),
+    );
+    return res.statusCode < 300;
+  }
+}
+
+/// The structured profile Anchor extracted from a paste (user_patterns).
+class ImportedProfile {
+  const ImportedProfile({
+    required this.pitfalls,
+    required this.currentProjects,
+    required this.priorities,
+    required this.habits,
+    this.workingStyle,
+    this.baselineLoad,
+    this.source,
+  });
+
+  final List<String> pitfalls;
+  final List<String> currentProjects;
+  final List<String> priorities;
+  final List<String> habits;
+  final String? workingStyle;
+  final String? baselineLoad;
+  final String? source;
+
+  static List<String> _strings(dynamic v) =>
+      (v is List) ? v.map((e) => e.toString()).where((s) => s.isNotEmpty).toList() : const [];
+
+  factory ImportedProfile.fromJson(Map<String, dynamic> j) => ImportedProfile(
+        pitfalls: _strings(j['pitfalls']),
+        currentProjects: _strings(j['current_projects']),
+        priorities: _strings(j['priorities']),
+        habits: _strings(j['habits']),
+        workingStyle: j['working_style'] as String?,
+        baselineLoad: j['baseline_load'] as String?,
+        source: j['source'] as String?,
+      );
+
+  /// True when the extraction actually found something worth showing.
+  bool get hasContent =>
+      pitfalls.isNotEmpty ||
+      currentProjects.isNotEmpty ||
+      priorities.isNotEmpty ||
+      habits.isNotEmpty ||
+      (workingStyle?.isNotEmpty ?? false) ||
+      (baselineLoad?.isNotEmpty ?? false);
 }
 
 class Load {
