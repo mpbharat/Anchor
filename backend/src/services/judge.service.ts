@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import * as brain from './brain.service';
 
 // The AI (Bharat, ai/judge.ts) owns the reasoning; this endpoint is the seam that
 // records every pass to `judgments` and schedules a nudge when the verdict warrants.
@@ -47,6 +48,7 @@ export async function judge(userId: string, input: JudgeInput): Promise<JudgeRes
   let verdict = input.verdict;
   let reasoning = input.reasoning ?? null;
   let spoken = input.spoken ?? null;
+  let weighed: unknown[] = input.weighed_against ?? [];
 
   // Deterministic fallback: only nudge on a real budget breach.
   if (!verdict && input.commitment_id && input.amount != null) {
@@ -65,6 +67,15 @@ export async function judge(userId: string, input: JudgeInput): Promise<JudgeRes
       reasoning = reasoning ?? 'Within the commitment. Logged, not shown.';
     }
   }
+  // AI judgment: no verdict supplied but a request is present -> reason with the model.
+  if (!verdict && input.request) {
+    const v = await brain.reason(userId, input.request);
+    verdict = v.verdict;
+    spoken = v.spoken;
+    reasoning = v.reasoning;
+    weighed = v.weighed_against;
+  }
+
   verdict = verdict ?? 'stay_silent';
 
   const { data, error } = await supabase
@@ -76,7 +87,7 @@ export async function judge(userId: string, input: JudgeInput): Promise<JudgeRes
       source: input.source,
       verdict,
       reasoning,
-      weighed_against: input.weighed_against ?? [],
+      weighed_against: weighed,
     })
     .select('*')
     .single();

@@ -21,6 +21,10 @@ export const env = {
   supabaseSecretKey: firstOf(['SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY']),
   // Used only for email/password auth flows.
   supabasePublishableKey: firstOf(['SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ANON_KEY']),
+  // OpenAI — the AI model inside Anchor (judgment + companion). Base URL + model swappable.
+  openaiApiKey: process.env.OPENAI_API_KEY ?? '',
+  openaiBaseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
+  openaiModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
   // Exa (sponsor) — companion web-search grounding. Optional: absent = feature off.
   exaApiKey: process.env.EXA_API_KEY ?? '',
   // OpenRouter — voice model (OpenAI-compatible gateway). Optional.
