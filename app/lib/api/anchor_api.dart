@@ -1,11 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
-/// Base URL of the Anchor backend.
-/// iOS simulator reaches the Mac's localhost directly. For the deployed demo,
-/// swap this for the Render URL (e.g. https://anchor-backend.onrender.com).
-const String kAnchorBaseUrl = 'http://localhost:3000';
+/// Backend URLs. Web (the public embed) hits the deployed Render backend; the
+/// iOS simulator hits the local dev backend.
+const String kAnchorRemoteUrl = 'https://anchor-qo9j.onrender.com';
+const String kAnchorLocalUrl = 'http://localhost:3000';
+
+/// Direct Supabase auth for the demo. The publishable key is client-safe by
+/// design; the demo account is a throwaway shared login for judges.
+const String kSupabaseUrl = 'https://kdpgslmbvyybulgashxz.supabase.co';
+const String kSupabasePublishableKey = 'sb_publishable_wM7ORk1nTD_uztKRQItXGg_nRbKbiV2';
+const String kDemoEmail = 'demo@anchor.app';
+const String kDemoPassword = 'anchor-demo-2026';
 
 /// Typed client for the Anchor API (see ANCHOR-BUILD-SPEC.md §7).
 /// Singleton so the auth token is shared across screens. For the demo it
@@ -15,7 +23,7 @@ class AnchorApi {
   static final AnchorApi instance = AnchorApi._();
   factory AnchorApi() => instance;
 
-  final String baseUrl = kAnchorBaseUrl;
+  final String baseUrl = kIsWeb ? kAnchorRemoteUrl : kAnchorLocalUrl;
   String? _token;
 
   Map<String, String> get _headers => {
@@ -23,18 +31,17 @@ class AnchorApi {
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
 
-  /// Ensures we have a session. Demo: dev-login (pre-confirmed user).
+  /// Ensures we have a session by authenticating the demo account directly
+  /// against Supabase (works in production; independent of the backend's /auth).
   Future<void> ensureAuth() async {
     if (_token != null) return;
     final res = await http.post(
-      Uri.parse('$baseUrl/auth/dev-login'),
-      headers: {'Content-Type': 'application/json'},
-      body: '{}',
+      Uri.parse('$kSupabaseUrl/auth/v1/token?grant_type=password'),
+      headers: {'apikey': kSupabasePublishableKey, 'Content-Type': 'application/json'},
+      body: jsonEncode({'email': kDemoEmail, 'password': kDemoPassword}),
     );
     if (res.statusCode == 200) {
-      final body = jsonDecode(res.body) as Map<String, dynamic>;
-      _token = body['access_token'] as String? ??
-          (body['session'] as Map<String, dynamic>?)?['access_token'] as String?;
+      _token = (jsonDecode(res.body) as Map<String, dynamic>)['access_token'] as String?;
     }
   }
 
@@ -75,6 +82,17 @@ class AnchorApi {
       spoken: data['spoken'] as String? ?? '',
       weighedAgainst: ((data['weighed_against'] as List?) ?? const []).map((e) => e.toString()).toList(),
     );
+  }
+
+  /// POST /commitments — put something on the record (after Anchor allows it).
+  Future<bool> addCommitment(String title) async {
+    await ensureAuth();
+    final res = await http.post(
+      Uri.parse('$baseUrl/commitments'),
+      headers: _headers,
+      body: jsonEncode({'title': title, 'kind': 'oneoff', 'metric': 'boolean'}),
+    );
+    return res.statusCode == 201;
   }
 
   /// POST /companion/chat — talk to Anchor. Returns the reply text.
