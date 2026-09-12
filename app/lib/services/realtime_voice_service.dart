@@ -13,9 +13,11 @@ class RealtimeVoice {
   RTCDataChannel? _dc;
 
   void Function(String state)? onState; // connecting | live | ended | error
-  void Function(String text)? onUserFinal; // a completed user turn
-  void Function(String delta)? onAnchorDelta; // streaming Anchor text
-  void Function()? onAnchorDone; // Anchor finished a turn
+  // Item-ordered transcript so turns render in true conversation order even
+  // though user transcription (whisper) resolves after Anchor starts replying.
+  void Function(String id, String role)? onItem; // a conversation item was created
+  void Function(String id, String text, bool append)? onTranscript; // text for an item
+  void Function(String id, String role, String text)? onItemDone; // item finalised (persist)
 
   bool _muted = false;
   bool get isMuted => _muted;
@@ -93,26 +95,56 @@ class RealtimeVoice {
     }
   }
 
+  final Map<String, String> _roleById = {};
+  final Map<String, String> _textById = {};
+
   void _onEvent(String raw) {
     try {
       final e = jsonDecode(raw) as Map<String, dynamic>;
       final type = e['type'] as String? ?? '';
       switch (type) {
+        case 'conversation.item.created':
+          final item = e['item'] as Map<String, dynamic>?;
+          final id = item?['id'] as String?;
+          final role = (item?['role'] as String?) == 'user' ? 'user' : 'anchor';
+          if (id != null) {
+            _roleById[id] = role;
+            _textById[id] ??= '';
+            onItem?.call(id, role); // reserves the slot in order
+          }
+          break;
         case 'response.output_audio_transcript.delta':
         case 'response.audio_transcript.delta':
-          onAnchorDelta?.call(e['delta'] as String? ?? '');
+          _apply(e['item_id'] as String?, 'anchor', e['delta'] as String? ?? '', append: true);
           break;
         case 'response.output_audio_transcript.done':
         case 'response.audio_transcript.done':
-        case 'response.done':
-          onAnchorDone?.call();
+          _done(e['item_id'] as String?, 'anchor', full: e['transcript'] as String?);
           break;
         case 'conversation.item.input_audio_transcription.completed':
-          final t = (e['transcript'] as String? ?? '').trim();
-          if (t.isNotEmpty) onUserFinal?.call(t);
+          _apply(e['item_id'] as String?, 'user', (e['transcript'] as String? ?? '').trim(), append: false);
+          _done(e['item_id'] as String?, 'user');
           break;
       }
     } catch (_) {}
+  }
+
+  void _apply(String? id, String role, String text, {required bool append}) {
+    if (id == null) return;
+    _roleById[id] ??= role;
+    if (onItem != null && !_textById.containsKey(id)) onItem!(id, _roleById[id]!);
+    _textById[id] = append ? (_textById[id] ?? '') + text : text;
+    onTranscript?.call(id, _textById[id]!, false);
+  }
+
+  void _done(String? id, String role, {String? full}) {
+    if (id == null) return;
+    if (full != null && full.isNotEmpty) {
+      _textById[id] = full;
+      onTranscript?.call(id, full, false);
+    }
+    final t = (_textById[id] ?? '').trim();
+    if (t.isNotEmpty) onItemDone?.call(id, _roleById[id] ?? role, t);
   }
 
   Future<void> disconnect() async {

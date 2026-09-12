@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
-import '../services/voice_service.dart';
 import '../widgets/anchor_chrome.dart';
 import 'commit_sheet.dart';
 import 'voice_call_screen.dart';
@@ -17,11 +16,9 @@ class TalkScreen extends StatefulWidget {
 
 class _TalkScreenState extends State<TalkScreen> {
   final _api = AnchorApi();
-  final _voice = VoiceService.instance;
   final _input = TextEditingController();
   final _scroll = ScrollController();
   final List<Turn> _turns = [];
-  bool _listening = false;
   bool _sending = false;
   String _loadLabel = '';
 
@@ -72,23 +69,6 @@ class _TalkScreenState extends State<TalkScreen> {
       _sending = false;
     });
     _scrollDown();
-    if (reply.isNotEmpty) _voice.speak(reply);
-  }
-
-  Future<void> _toggleMic() async {
-    if (_listening) {
-      await _voice.stop();
-      setState(() => _listening = false);
-      return;
-    }
-    final ok = await _voice.listen(
-      onPartial: (t) => setState(() => _input.text = t),
-      onFinal: (t) {
-        setState(() => _listening = false);
-        if (t.trim().isNotEmpty) _send(t);
-      },
-    );
-    setState(() => _listening = ok);
   }
 
   Future<void> _openCommit() async {
@@ -115,37 +95,26 @@ class _TalkScreenState extends State<TalkScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AnchorHeader(trailing: _loadLabel.isEmpty ? null : AnchorBadge(_loadLabel)),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: _openCommit,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 8, shadow: 3),
-                  child: const Text('+ COMMIT TO SOMETHING',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
-                ),
-              ),
-              GestureDetector(
-                onTap: _openCall,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: AnchorBox.surface(bg: AnchorColors.card, radius: 8, shadow: 3),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.graphic_eq, size: 14, color: AnchorColors.ink),
-                      SizedBox(width: 5),
-                      Text('VOICE', style: TextStyle(color: AnchorColors.ink, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
-                    ],
+          AnchorHeader(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: _openCall,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 20, shadow: 3),
+                    child: const Icon(Icons.graphic_eq, color: Colors.white, size: 20),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                if (_loadLabel.isNotEmpty) AnchorBadge(_loadLabel),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Expanded(
             child: ListView.separated(
               controller: _scroll,
@@ -157,9 +126,8 @@ class _TalkScreenState extends State<TalkScreen> {
           const SizedBox(height: 10),
           _InputBar(
             controller: _input,
-            listening: _listening,
             sending: _sending,
-            onMic: _toggleMic,
+            onCommit: _openCommit,
             onSend: () => _send(_input.text),
           ),
         ],
@@ -197,15 +165,13 @@ class _Bubble extends StatelessWidget {
 class _InputBar extends StatelessWidget {
   const _InputBar({
     required this.controller,
-    required this.listening,
     required this.sending,
-    required this.onMic,
+    required this.onCommit,
     required this.onSend,
   });
   final TextEditingController controller;
-  final bool listening;
   final bool sending;
-  final VoidCallback onMic;
+  final VoidCallback onCommit;
   final VoidCallback onSend;
 
   @override
@@ -213,13 +179,13 @@ class _InputBar extends StatelessWidget {
     return Row(
       children: [
         GestureDetector(
-          onTap: onMic,
+          onTap: onCommit,
           child: Container(
             width: 48,
             height: 48,
             alignment: Alignment.center,
-            decoration: AnchorBox.surface(bg: listening ? AnchorColors.alert : AnchorColors.card, radius: 24, shadow: 3),
-            child: Icon(listening ? Icons.stop : Icons.mic, color: listening ? Colors.white : AnchorColors.ink),
+            decoration: AnchorBox.surface(bg: AnchorColors.card, radius: 24, shadow: 3),
+            child: const Icon(Icons.add, color: AnchorColors.ink),
           ),
         ),
         const SizedBox(width: 10),
@@ -233,11 +199,11 @@ class _InputBar extends StatelessWidget {
               maxLines: 3,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
-              decoration: InputDecoration(
-                hintText: listening ? 'Listening…' : 'Talk to Anchor',
+              decoration: const InputDecoration(
+                hintText: 'Talk to Anchor',
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                contentPadding: EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),

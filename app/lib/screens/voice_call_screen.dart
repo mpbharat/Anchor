@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
+import '../api/anchor_api.dart';
 import '../services/realtime_voice_service.dart';
 
 /// Live voice call with Anchor (duplex). Shows the running conversation as it
@@ -18,8 +19,10 @@ class _VTurn {
 
 class _VoiceCallScreenState extends State<VoiceCallScreen> {
   final _rt = RealtimeVoice();
+  final _api = AnchorApi();
   final _scroll = ScrollController();
-  final List<_VTurn> _turns = [];
+  final List<String> _order = [];
+  final Map<String, _VTurn> _byId = {};
   String _state = 'connecting';
   bool _muted = false;
 
@@ -30,27 +33,32 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       ..onState = (s) {
         if (mounted) setState(() => _state = s);
       }
-      ..onUserFinal = (t) {
-        if (!mounted) return;
-        setState(() => _turns.add(_VTurn('user', t)));
-        _scrollDown();
-      }
-      ..onAnchorDelta = (d) {
+      ..onItem = (id, role) {
         if (!mounted) return;
         setState(() {
-          if (_turns.isEmpty || _turns.last.role != 'anchor' || _turns.last.text == '__done__') {
-            _turns.add(_VTurn('anchor', ''));
+          if (!_byId.containsKey(id)) {
+            _byId[id] = _VTurn(role, '');
+            _order.add(id);
           }
-          _turns.last.text += d;
         });
         _scrollDown();
       }
-      ..onAnchorDone = () {
+      ..onTranscript = (id, text, _) {
         if (!mounted) return;
-        // mark boundary so the next delta starts a fresh bubble
-        if (_turns.isNotEmpty && _turns.last.role == 'anchor') {
-          _turns.add(_VTurn('anchor', '__done__'));
-        }
+        setState(() {
+          final t = _byId[id];
+          if (t != null) {
+            t.text = text;
+          } else {
+            _byId[id] = _VTurn('anchor', text);
+            _order.add(id);
+          }
+        });
+        _scrollDown();
+      }
+      ..onItemDone = (id, role, text) {
+        // persist so Talk shows the full voice conversation afterwards
+        _api.postMessage(role == 'anchor' ? 'anchor' : 'user', text);
       };
     _rt.connect();
   }
@@ -93,7 +101,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final visible = _turns.where((t) => t.text != '__done__' && t.text.isNotEmpty).toList();
+    final visible = _order.map((id) => _byId[id]!).where((t) => t.text.trim().isNotEmpty).toList();
     return Scaffold(
       backgroundColor: AnchorColors.scr,
       body: SafeArea(

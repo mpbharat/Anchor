@@ -138,6 +138,17 @@ class AnchorApi {
     return (jsonDecode(res.body) as Map<String, dynamic>)['reply'] as String? ?? '';
   }
 
+  /// POST /messages — persist a turn (used to save voice-call turns to the chat).
+  Future<void> postMessage(String role, String content) async {
+    if (content.trim().isEmpty) return;
+    await ensureAuth();
+    await http.post(
+      Uri.parse('$baseUrl/messages'),
+      headers: _headers,
+      body: jsonEncode({'role': role, 'content': content, 'turn_kind': 'chat'}),
+    );
+  }
+
   /// GET /messages — the Talk transcript.
   Future<List<Turn>> conversation() async {
     await ensureAuth();
