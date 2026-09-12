@@ -52,6 +52,10 @@ export async function checkin(req: Request, res: Response): Promise<void> {
   res.json({ commitment: await commitmentService.checkin(req.user!.id, req.params.id, req.body) });
 }
 
+export async function checkins(req: Request, res: Response): Promise<void> {
+  res.json({ checkins: await commitmentService.listCheckins(req.user!.id, req.params.id) });
+}
+
 export async function drop(req: Request, res: Response): Promise<void> {
   res.json({ commitment: await commitmentService.dropCommitment(req.user!.id, req.params.id) });
 }

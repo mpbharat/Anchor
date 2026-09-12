@@ -13,6 +13,7 @@ class CommitmentDetailScreen extends StatefulWidget {
 class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
   final _api = AnchorApi();
   Commitment? _c;
+  List<CheckIn> _log = const [];
   bool _loading = true;
   bool _busy = false;
   bool _confirmDrop = false;
@@ -26,9 +27,23 @@ class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
   Future<void> _load() async {
     try {
       final c = await _api.commitment(widget.id);
-      if (mounted) setState(() { _c = c; _loading = false; });
+      final log = await _api.checkins(widget.id);
+      if (mounted) setState(() { _c = c; _log = log; _loading = false; });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _logLine(CheckIn e) {
+    final when = e.at == null ? '' : '${e.at!.day}/${e.at!.month} · ';
+    switch (e.kind) {
+      case 'done':
+        return '${when}Marked done';
+      case 'miss':
+        return '${when}Missed';
+      default:
+        final v = e.value == null ? '' : ' (${e.value! > 0 ? '+' : ''}${e.value!.toInt()})';
+        return '${when}Logged progress$v';
     }
   }
 
@@ -139,7 +154,27 @@ class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
                       _ProgressBar(value: c.targetValue == 0 ? 0 : (c.currentValue / c.targetValue).clamp(0, 1)),
                       const SizedBox(height: 20),
                     ],
-                    const Spacer(),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('LOG',
+                              style: TextStyle(fontFamily: 'monospace', fontSize: 10, fontWeight: FontWeight.w700, color: AnchorColors.dim)),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: _log.isEmpty
+                                ? const Text('No check-ins yet. Log progress below and it shows up here.',
+                                    style: TextStyle(color: AnchorColors.dim, fontSize: 13, height: 1.35))
+                                : ListView.separated(
+                                    itemCount: _log.length,
+                                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                    itemBuilder: (_, i) => _LogRow(text: _logLine(_log[i]), note: _log[i].note, kind: _log[i].kind),
+                                  ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
+                    ),
                     if (!c.isDone) ...[
                       if (c.metric == 'count') ...[
                         const Text('LOG PROGRESS',
@@ -250,6 +285,53 @@ class _ActionButton extends StatelessWidget {
         decoration: AnchorBox.surface(bg: bg, shadow: shadow),
         child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w900, letterSpacing: 1)),
       ),
+    );
+  }
+}
+
+class _LogRow extends StatelessWidget {
+  const _LogRow({required this.text, required this.kind, this.note});
+  final String text;
+  final String kind;
+  final String? note;
+
+  Color get _dot {
+    switch (kind) {
+      case 'done':
+        return AnchorColors.ok;
+      case 'miss':
+        return AnchorColors.alert;
+      default:
+        return AnchorColors.accent;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 5),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: _dot, border: Border.all(color: AnchorColors.ink, width: 2)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              if (note != null && note!.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(note!, style: const TextStyle(fontSize: 12, color: AnchorColors.dim)),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

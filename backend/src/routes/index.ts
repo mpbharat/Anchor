@@ -49,6 +49,7 @@ router.post('/commitments', validateBody(commitments.createCommitmentSchema), as
 router.get('/commitments/:id', asyncHandler(commitments.get));
 router.patch('/commitments/:id', validateBody(commitments.updateCommitmentSchema), asyncHandler(commitments.update));
 router.put('/commitments/:id/checkin', validateBody(commitments.checkinSchema), asyncHandler(commitments.checkin));
+router.get('/commitments/:id/checkins', asyncHandler(commitments.checkins));
 router.post('/commitments/:id/swap', validateBody(commitments.swapSchema), asyncHandler(commitments.swap));
 router.delete('/commitments/:id', asyncHandler(commitments.drop));
 

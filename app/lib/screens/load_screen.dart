@@ -92,6 +92,14 @@ class _LoadScreenState extends State<LoadScreen> {
                       c,
                       expanded: _expanded == c.id,
                       onTap: () => setState(() => _expanded = _expanded == c.id ? null : c.id),
+                      onProgress: (delta) async {
+                        await _api.checkin(c.id, kind: 'progress', value: delta.toDouble());
+                        _refresh();
+                      },
+                      onDone: () async {
+                        await _api.checkin(c.id, kind: 'done');
+                        _refresh();
+                      },
                       onOpen: () async {
                         await Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => CommitmentDetailScreen(id: c.id)),
@@ -149,11 +157,19 @@ class _FocusGauge extends StatelessWidget {
 }
 
 class _PlateTile extends StatelessWidget {
-  const _PlateTile(this.c, {required this.expanded, required this.onTap, required this.onOpen});
+  const _PlateTile(this.c, {
+    required this.expanded,
+    required this.onTap,
+    required this.onOpen,
+    required this.onProgress,
+    required this.onDone,
+  });
   final Commitment c;
   final bool expanded;
   final VoidCallback onTap;
   final VoidCallback onOpen;
+  final void Function(int delta) onProgress;
+  final VoidCallback onDone;
 
   String get _statusLabel {
     if (c.isDone) return 'DONE';
@@ -262,20 +278,55 @@ class _PlateTile extends StatelessWidget {
                         style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: AnchorColors.dim)),
                   ],
                   const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: onOpen,
-                    child: Container(
-                      height: 42,
-                      alignment: Alignment.center,
-                      decoration: AnchorBox.surface(bg: AnchorColors.accent, shadow: 3),
-                      child: const Text('OPEN · UPDATE OR DROP',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+                  if (!c.isDone)
+                    Row(
+                      children: [
+                        if (c.metric == 'count') ...[
+                          Expanded(child: _MiniBtn('– 1', bg: AnchorColors.card, fg: AnchorColors.ink, onTap: c.currentValue <= 0 ? null : () => onProgress(-1))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _MiniBtn('+ 1', bg: AnchorColors.energy, fg: AnchorColors.ink, onTap: () => onProgress(1))),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(child: _MiniBtn('✓ DONE', bg: AnchorColors.ok, fg: Colors.white, onTap: onDone)),
+                      ],
+                    ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: GestureDetector(
+                      onTap: onOpen,
+                      child: const Text('View details and log',
+                          style: TextStyle(color: AnchorColors.accent, fontWeight: FontWeight.w800, fontSize: 13)),
                     ),
                   ),
                 ],
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _MiniBtn extends StatelessWidget {
+  const _MiniBtn(this.label, {required this.bg, required this.fg, required this.onTap});
+  final String label;
+  final Color bg;
+  final Color fg;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Opacity(
+        opacity: disabled ? 0.45 : 1,
+        child: Container(
+          height: 42,
+          alignment: Alignment.center,
+          decoration: AnchorBox.surface(bg: bg, shadow: 3),
+          child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w900, fontSize: 13)),
+        ),
       ),
     );
   }

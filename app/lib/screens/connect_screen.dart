@@ -78,7 +78,13 @@ class _ConnectScreenState extends State<ConnectScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AnchorHeader(trailing: AnchorBadge('OPTIONAL')),
+              AnchorHeader(
+                leading: GestureDetector(
+                  onTap: () => Navigator.of(context).maybePop(),
+                  child: const Icon(Icons.arrow_back, color: AnchorColors.ink),
+                ),
+                trailing: const AnchorBadge('OPTIONAL'),
+              ),
               const SizedBox(height: 18),
               const Text('CONNECT YOUR WORLD — OPTIONAL',
                   style: TextStyle(

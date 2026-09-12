@@ -108,6 +108,15 @@ class AnchorApi {
     return Commitment.fromJson(c);
   }
 
+  /// GET /commitments/:id/checkins — the progress log for a commitment.
+  Future<List<CheckIn>> checkins(String id) async {
+    await ensureAuth();
+    final res = await http.get(Uri.parse('$baseUrl/commitments/$id/checkins'), headers: _headers);
+    if (res.statusCode != 200) return const [];
+    final list = (jsonDecode(res.body) as Map<String, dynamic>)['checkins'] as List? ?? const [];
+    return list.map((c) => CheckIn.fromJson(c as Map<String, dynamic>)).toList();
+  }
+
   /// PUT /commitments/:id/checkin — log progress or mark done/miss.
   Future<bool> checkin(String id, {required String kind, double? value}) async {
     await ensureAuth();
@@ -348,6 +357,21 @@ class Commitment {
         unit: j['unit'] as String?,
         period: j['period'] as String?,
         kind: j['kind'] as String?,
+      );
+}
+
+class CheckIn {
+  final String kind; // progress | done | miss
+  final double? value;
+  final String? note;
+  final DateTime? at;
+  const CheckIn({required this.kind, this.value, this.note, this.at});
+
+  factory CheckIn.fromJson(Map<String, dynamic> j) => CheckIn(
+        kind: j['kind'] as String? ?? 'progress',
+        value: (j['value'] as num?)?.toDouble(),
+        note: j['note'] as String?,
+        at: DateTime.tryParse(j['occurred_at'] as String? ?? '')?.toLocal(),
       );
 }
 

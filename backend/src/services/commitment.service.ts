@@ -108,6 +108,19 @@ export async function getCommitment(userId: string, id: string): Promise<Commitm
   return { ...(data as Commitment), intention: await getIntention(id) };
 }
 
+// GET /commitments/:id/checkins — the progress log for this commitment.
+export async function listCheckins(userId: string, id: string) {
+  await getCommitment(userId, id); // authorises: throws if not the owner's
+  const { data, error } = await supabase
+    .from('check_ins')
+    .select('*')
+    .eq('commitment_id', id)
+    .order('occurred_at', { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 // PUT /commitments/:id/checkin — tick progress / done / miss.
 export async function checkin(
   userId: string,
