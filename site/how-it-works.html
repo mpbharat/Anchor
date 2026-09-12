@@ -21,10 +21,12 @@
   .btn-paper{background:var(--card)}
   /* nav */
   nav{border-bottom:2.5px solid var(--ink);background:var(--scr);position:sticky;top:0;z-index:10}
-  nav .row{max-width:920px;margin:0 auto;padding:0 22px;height:62px;display:flex;align-items:center;justify-content:space-between}
-  .word{font-weight:900;letter-spacing:4px;font-size:19px;color:var(--ink)}
-  .navlinks a{margin-left:18px;font-size:14px;color:var(--ink)}
+  nav .row{max-width:920px;margin:0 auto;padding:0 22px;height:64px;display:flex;align-items:center;justify-content:space-between}
+  .word{font-weight:900;letter-spacing:4px;font-size:20px;color:var(--ink);text-decoration:none}
+  .navlinks{display:flex;align-items:center;gap:22px}
+  .navlinks a:not(.btn){font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
   .navlinks a.on{color:var(--accent)}
+  .navbtn{padding:8px 14px;box-shadow:3px 3px 0 var(--ink)}
   /* hero */
   header{padding:64px 0 20px}
   header h1{font-size:clamp(38px,7vw,68px);font-weight:900;line-height:0.98;letter-spacing:-1px}
@@ -108,9 +110,8 @@
 <nav><div class="row">
   <a class="word" href="/">ANCHOR</a>
   <div class="navlinks">
-    <a href="/#live">Try it</a>
     <a class="on" href="/how-it-works.html">How it works</a>
-    <a href="https://github.com/mpbharat/Anchor" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn btn-paper navbtn" href="https://github.com/mpbharat/Anchor" target="_blank" rel="noopener">GitHub ↗</a>
   </div>
 </div></nav>
 
