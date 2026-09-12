@@ -23,4 +23,7 @@ export const env = {
   supabasePublishableKey: firstOf(['SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ANON_KEY']),
   // Exa (sponsor) — companion web-search grounding. Optional: absent = feature off.
   exaApiKey: process.env.EXA_API_KEY ?? '',
+  // OpenRouter — voice model (OpenAI-compatible gateway). Optional.
+  openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',
+  openRouterBaseUrl: process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',
 };
