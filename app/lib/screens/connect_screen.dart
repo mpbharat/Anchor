@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../api/anchor_api.dart';
 import '../theme/anchor_theme.dart';
 import '../widgets/anchor_chrome.dart';
@@ -15,7 +16,11 @@ class ConnectScreen extends StatefulWidget {
   State<ConnectScreen> createState() => _ConnectScreenState();
 }
 
-class _ConnectScreenState extends State<ConnectScreen> {
+class _ConnectScreenState extends State<ConnectScreen> with WidgetsBindingObserver {
+  /// Providers whose "connect" is a real Google OAuth grant rather than a
+  /// stored flag. Both live on one consent screen, so either card starts it.
+  static const _googleProviders = {'google_calendar', 'gmail'};
+
   static const _providers = [
     (
       id: 'google_calendar',
@@ -43,8 +48,27 @@ class _ConnectScreenState extends State<ConnectScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
   }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Consent happens in the browser, so the grant lands while this screen is
+  /// backgrounded. Re-read on the way back rather than leaving a stale card.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _awaitingGoogle) {
+      _awaitingGoogle = false;
+      _load();
+    }
+  }
+
+  bool _awaitingGoogle = false;
 
   Future<void> _load() async {
     final s = await AnchorApi.instance.integrations();
@@ -53,19 +77,56 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   bool _isConnected(String id) => _status[id] == 'connected';
 
+  void _say(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _toggle(String id) async {
     if (_pending.contains(id)) return;
     final next = !_isConnected(id);
     setState(() => _pending.add(id));
-    final ok = await AnchorApi.instance.setIntegration(id, connected: next);
+    try {
+      // Connecting Google means a real read-only grant, so hand off to the
+      // consent screen. Disconnecting is just a status flip.
+      if (next && _googleProviders.contains(id)) {
+        await _startGoogleOAuth();
+        return;
+      }
+      final ok = await AnchorApi.instance.setIntegration(id, connected: next);
+      if (!mounted) return;
+      if (ok) {
+        setState(() => _status[id] = next ? 'connected' : 'revoked');
+      } else {
+        _say("Couldn't reach Anchor. Try again.");
+      }
+    } catch (_) {
+      // Without this the provider stays stuck in _pending and every later tap
+      // returns early, so the button would look dead with nothing explaining it.
+      _say("Couldn't reach Anchor. Try again.");
+    } finally {
+      if (mounted) setState(() => _pending.remove(id));
+    }
+  }
+
+  Future<void> _startGoogleOAuth() async {
+    final url = await AnchorApi.instance.googleAuthUrl();
     if (!mounted) return;
-    setState(() {
-      _pending.remove(id);
-      if (ok) _status[id] = next ? 'connected' : 'revoked';
-    });
-    if (!ok) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Couldn't reach Anchor. Try again.")));
+    if (url == null) {
+      _say('Google sign-in is not configured yet.');
+      return;
+    }
+    // Google refuses OAuth inside an embedded webview, so this must open the
+    // real browser.
+    final launched = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!mounted) return;
+    if (launched) {
+      _awaitingGoogle = true;
+    } else {
+      _say("Couldn't open the browser.");
     }
   }
 

@@ -25,6 +25,15 @@ export const env = {
   openaiApiKey: process.env.OPENAI_API_KEY ?? '',
   openaiBaseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
   openaiModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+  // Google (read-only Calendar + Gmail). The secret stays server-side: the app
+  // only ever opens a consent URL we mint, it never handles the exchange.
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+  // Must match a redirect URI registered on the OAuth client character for
+  // character. Defaults to the local backend, which the Android emulator can
+  // reach on localhost via `adb reverse tcp:3000 tcp:3000`.
+  googleRedirectUri:
+    process.env.GOOGLE_REDIRECT_URI ?? 'http://localhost:3000/integrations/google/callback',
   // Exa (sponsor) — companion web-search grounding. Optional: absent = feature off.
   exaApiKey: process.env.EXA_API_KEY ?? '',
   // OpenRouter — voice model (OpenAI-compatible gateway). Optional.

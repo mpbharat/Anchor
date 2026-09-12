@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'api/anchor_api.dart';
 import 'theme/anchor_theme.dart';
+import 'screens/auth_screen.dart';
 import 'screens/talk_screen.dart';
 import 'screens/load_screen.dart';
 import 'screens/standing_screen.dart';
 
-void main() => runApp(const AnchorApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Owns the session: restores it on launch and refreshes it before expiry, so
+  // signing in survives a restart.
+  await Supabase.initialize(
+    url: kSupabaseUrl,
+    publishableKey: kSupabasePublishableKey,
+  );
+  runApp(const AnchorApp());
+}
 
 class AnchorApp extends StatelessWidget {
   const AnchorApp({super.key});
@@ -14,7 +26,26 @@ class AnchorApp extends StatelessWidget {
       title: 'Anchor',
       debugShowCheckedModeBanner: false,
       theme: anchorTheme(),
-      home: const HomeShell(),
+      home: const _AuthGate(),
+    );
+  }
+}
+
+/// Decides between the sign-in screen and the app. Driven by the auth stream so
+/// signing out anywhere drops straight back here without manual navigation.
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, _) {
+        // Read the client rather than the event: on a cold start the stream has
+        // not emitted yet, but a restored session is already available.
+        final signedIn = Supabase.instance.client.auth.currentSession != null;
+        return signedIn ? const HomeShell() : const AuthScreen();
+      },
     );
   }
 }

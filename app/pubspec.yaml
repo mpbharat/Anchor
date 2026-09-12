@@ -18,6 +18,9 @@ dependencies:
   # push / nudges
   firebase_core: ^3.1.0
   firebase_messaging: ^15.0.0
+  # opens Google's consent page in the system browser for the Connect screen.
+  # Google rejects OAuth inside an embedded webview, so it has to leave the app.
+  url_launcher: ^6.3.2
   # utils
   intl: ^0.19.0
 

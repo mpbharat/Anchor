@@ -23,6 +23,11 @@ const router = Router();
 // Auth (convenience proxies over Supabase Auth; the app may also use the SDK).
 router.use('/auth', authRoutes);
 
+// Google redirects the browser here after consent, with no Authorization
+// header, so it has to sit above requireAuth. It authenticates the person from
+// the signed `state` it minted in /integrations/google/start instead.
+router.get('/integrations/google/callback', asyncHandler(integrations.googleCallback));
+
 // Everything below is scoped to the signed-in user.
 router.use(requireAuth);
 
@@ -66,6 +71,7 @@ router.post('/realtime/session', asyncHandler(realtime.session));
 
 // Integrations & signals (Maria)
 router.get('/integrations', asyncHandler(integrations.list));
+router.get('/integrations/google/start', asyncHandler(integrations.startGoogle));
 router.post('/integrations/google', validateBody(integrations.connectGoogleSchema), asyncHandler(integrations.connectGoogle));
 router.put('/integrations/status', validateBody(integrations.statusSchema), asyncHandler(integrations.setStatus));
 router.post('/signals', validateBody(signals.ingestSchema), asyncHandler(signals.ingest));

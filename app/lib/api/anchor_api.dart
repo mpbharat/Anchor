@@ -2,51 +2,56 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Backend URLs. Web (the public embed) hits the deployed Render backend; the
 /// iOS simulator hits the local dev backend.
 const String kAnchorRemoteUrl = 'https://anchor-qo9j.onrender.com';
 const String kAnchorLocalUrl = 'http://localhost:3000';
 
-/// Direct Supabase auth for the demo. The publishable key is client-safe by
-/// design; the demo account is a throwaway shared login for judges.
+/// Supabase project. The publishable key is client-safe by design.
 const String kSupabaseUrl = 'https://kdpgslmbvyybulgashxz.supabase.co';
 const String kSupabasePublishableKey = 'sb_publishable_wM7ORk1nTD_uztKRQItXGg_nRbKbiV2';
-const String kDemoEmail = 'demo@anchor.app';
-const String kDemoPassword = 'anchor-demo-2026';
 
 /// Typed client for the Anchor API (see ANCHOR-BUILD-SPEC.md §7).
-/// Singleton so the auth token is shared across screens. For the demo it
-/// dev-logs in automatically; on the day this is replaced by real sign-in.
+/// Singleton so every screen talks to the same signed-in person.
 class AnchorApi {
   AnchorApi._();
   static final AnchorApi instance = AnchorApi._();
   factory AnchorApi() => instance;
 
   final String baseUrl = kIsWeb ? kAnchorRemoteUrl : kAnchorLocalUrl;
-  String? _token;
+
+  GoTrueClient get _auth => Supabase.instance.client.auth;
+
+  /// The signed-in person's access token. Read straight from the SDK rather
+  /// than cached here: the SDK persists the session across restarts and
+  /// refreshes it before expiry, and nothing can go stale or survive a sign-out.
+  String? get _accessToken => _auth.currentSession?.accessToken;
+
+  bool get isSignedIn => _accessToken != null;
+  String? get currentEmail => _auth.currentUser?.email;
+  String? get currentUserId => _auth.currentUser?.id;
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
+        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
       };
 
   /// Auth headers for callers that need to hit the backend directly (realtime).
   Map<String, String> get authHeaders => _headers;
 
-  /// Ensures we have a session by authenticating the demo account directly
-  /// against Supabase (works in production; independent of the backend's /auth).
-  Future<void> ensureAuth() async {
-    if (_token != null) return;
-    final res = await http.post(
-      Uri.parse('$kSupabaseUrl/auth/v1/token?grant_type=password'),
-      headers: {'apikey': kSupabasePublishableKey, 'Content-Type': 'application/json'},
-      body: jsonEncode({'email': kDemoEmail, 'password': kDemoPassword}),
-    );
-    if (res.statusCode == 200) {
-      _token = (jsonDecode(res.body) as Map<String, dynamic>)['access_token'] as String?;
-    }
-  }
+  /// Kept as the seam every call site already goes through. The SDK restores
+  /// and refreshes the session itself, so there is nothing to do here now.
+  Future<void> ensureAuth() async {}
+
+  Future<AuthResponse> signIn({required String email, required String password}) =>
+      _auth.signInWithPassword(email: email.trim(), password: password);
+
+  Future<AuthResponse> signUp({required String email, required String password}) =>
+      _auth.signUp(email: email.trim(), password: password);
+
+  Future<void> signOut() => _auth.signOut();
 
   /// GET /weeks/current/commitments — the Load.
   Future<List<Commitment>> currentCommitments() async {
@@ -253,8 +258,24 @@ class AnchorApi {
     };
   }
 
+  /// GET /integrations/google/start — the Google consent URL to open in the
+  /// browser. The backend holds the client secret and does the code exchange,
+  /// so the app never touches a Google token.
+  /// Returns null when Google is not configured server-side.
+  Future<String?> googleAuthUrl() async {
+    await ensureAuth();
+    final res = await http.get(
+      Uri.parse('$baseUrl/integrations/google/start'),
+      headers: _headers,
+    );
+    if (res.statusCode != 200) return null;
+    return (jsonDecode(res.body) as Map<String, dynamic>)['url'] as String?;
+  }
+
   /// PUT /integrations/status — flip a provider connected/revoked.
-  /// Read-only scopes; real OAuth is a config swap for the demo.
+  /// Connecting Google goes through real OAuth (see [googleAuthUrl]); this is
+  /// for revoking, and for 'notifications', which is device-local and has no
+  /// OAuth of its own.
   Future<bool> setIntegration(String provider, {required bool connected}) async {
     await ensureAuth();
     final res = await http.put(

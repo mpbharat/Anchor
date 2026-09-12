@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../api/anchor_api.dart';
 import '../theme/anchor_theme.dart';
 import 'connect_screen.dart';
 import 'import_screen.dart';
@@ -9,8 +10,52 @@ import 'import_screen.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  /// The signed-in account, shown so it is always obvious whose week this is
+  /// and which account a Google grant would attach to.
+  static String _name(String? email) {
+    if (email == null || email.isEmpty) return 'Anchor';
+    final local = email.split('@').first;
+    if (local.isEmpty) return 'Anchor';
+    return local[0].toUpperCase() + local.substring(1);
+  }
+
+  static String _initial(String? email) {
+    final n = _name(email);
+    return n.isEmpty ? 'A' : n[0].toUpperCase();
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AnchorColors.card,
+        title: const Text('Sign out?', style: TextStyle(fontWeight: FontWeight.w900)),
+        content: const Text(
+          'Your commitments stay on your account. You can sign back in any time.',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('CANCEL', style: TextStyle(color: AnchorColors.dim)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('SIGN OUT', style: TextStyle(color: AnchorColors.alert)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await AnchorApi.instance.signOut();
+    // The auth gate in main.dart swaps in the sign-in screen, so this route
+    // has to come off the stack or it would sit on top of it.
+    if (context.mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final email = AnchorApi.instance.currentEmail;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -36,16 +81,22 @@ class SettingsScreen extends StatelessWidget {
                       height: 52,
                       alignment: Alignment.center,
                       decoration: AnchorBox.surface(bg: AnchorColors.energy, radius: 26, shadow: 2),
-                      child: const Text('B', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22)),
+                      child: Text(_initial(email),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22)),
                     ),
                     const SizedBox(width: 14),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Bharat', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
-                        SizedBox(height: 3),
-                        Text('Holding four this week', style: TextStyle(fontSize: 13, color: AnchorColors.dim)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_name(email),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+                          const SizedBox(height: 3),
+                          Text(email ?? 'Not signed in',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 13, color: AnchorColors.dim)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -74,6 +125,23 @@ class SettingsScreen extends StatelessWidget {
                 child: const Text(
                   'Read-only and private. Anchor never sends, posts, or deletes anything on your behalf.',
                   style: TextStyle(fontSize: 12, color: AnchorColors.dim, height: 1.35),
+                ),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _signOut(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  decoration: AnchorBox.surface(radius: 10, shadow: 3),
+                  alignment: Alignment.center,
+                  child: const Text('SIGN OUT',
+                      style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: AnchorColors.alert,
+                          letterSpacing: 1)),
                 ),
               ),
             ],
