@@ -6,6 +6,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from datetime import datetime, timezone
 
+from signal_client import post_signal
+
 
 
 # Read-only access to calendar events.
@@ -76,7 +78,7 @@ from datetime import datetime, timedelta, timezone
 
 
 def get_upcoming_events(max_results=20):
-    """Fetch upcoming events from the user's primary calendar."""
+    """Fetch upcoming regular calendar events that can affect the user's load."""
 
     service = get_calendar_service()
 
@@ -88,11 +90,56 @@ def get_upcoming_events(max_results=20):
         timeMin=now.isoformat(),
         timeMax=time_max.isoformat(),
         maxResults=max_results,
+        eventTypes="default",
+        showDeleted=False,
+        showHiddenInvitations=False,
         singleEvents=True,
         orderBy="startTime"
     ).execute()
 
     return events_result.get("items", [])
+
+
+def is_relevant_event(event: dict) -> bool:
+    """Keep actual upcoming commitments, excluding cancelled or declined invitations."""
+
+    if event.get("status") == "cancelled":
+        return False
+    return not any(
+        attendee.get("self") and attendee.get("responseStatus") == "declined"
+        for attendee in event.get("attendees", [])
+    )
+
+
+def get_relevant_upcoming_events(max_results: int = 20) -> list[dict]:
+    return [event for event in get_upcoming_events(max_results) if is_relevant_event(event)]
+
+
+def event_to_signal(event: dict) -> dict | None:
+    """Convert a relevant calendar event into the small load-signal API shape."""
+
+    if not is_relevant_event(event):
+        return None
+    start = event.get("start", {})
+    occurred_at = start.get("dateTime")
+    if not occurred_at and start.get("date"):
+        occurred_at = f"{start['date']}T00:00:00Z"
+    if not occurred_at:
+        return None
+    return {
+        "source": "calendar",
+        "kind": "event",
+        "title": event.get("summary", "Calendar event")[:500],
+        "category": "calendar_event",
+        "occurred_at": occurred_at,
+    }
+
+
+def sync_relevant_events(max_results: int = 20) -> list[dict]:
+    """Post only confirmed/tentative regular events to the backend."""
+
+    signals = (event_to_signal(event) for event in get_relevant_upcoming_events(max_results))
+    return [post_signal(signal) for signal in signals if signal]
 
 
 def print_events_min(events):

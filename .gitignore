@@ -5,7 +5,10 @@
 *.p8
 **/service-account*.json
 **/google-credentials*.json
-
+integrations/credentials.json
+integrations/token_*.json
+.venv/
+__pycache__/
 # flutter / dart
 app/.dart_tool/
 app/.flutter-plugins
