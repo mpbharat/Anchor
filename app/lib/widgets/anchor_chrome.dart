@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
 
-/// Top wordmark row shared by every screen. Optional [trailing] slot
-/// (e.g. the WK37 / MON badge on the Load).
+/// Top wordmark row shared by every screen. Optional [leading] (e.g. a settings
+/// gear) sits before the wordmark; optional [trailing] slot (e.g. a status badge).
 class AnchorHeader extends StatelessWidget {
-  const AnchorHeader({super.key, this.trailing});
+  const AnchorHeader({super.key, this.trailing, this.leading});
   final Widget? trailing;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('ANCHOR',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 3)),
+        Row(
+          children: [
+            if (leading != null) ...[leading!, const SizedBox(width: 10)],
+            const Text('ANCHOR',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 3)),
+          ],
+        ),
         if (trailing != null) trailing!,
       ],
     );

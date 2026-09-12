@@ -5,6 +5,7 @@ import '../api/anchor_api.dart';
 import '../widgets/anchor_chrome.dart';
 import 'commit_sheet.dart';
 import 'voice_call_screen.dart';
+import 'settings_screen.dart';
 
 /// Talk — the home screen and front door. Anchor is a conversation first:
 /// you talk to it (type or voice), it references your load, pushes back, and
@@ -95,6 +96,10 @@ class _TalkScreenState extends State<TalkScreen> {
     _bootstrap(); // refresh transcript + load after a voice session
   }
 
+  void _openSettings() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+  }
+
   @override
   void dispose() {
     _input.dispose();
@@ -110,6 +115,10 @@ class _TalkScreenState extends State<TalkScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnchorHeader(
+            leading: GestureDetector(
+              onTap: _openSettings,
+              child: const Icon(Icons.settings, color: AnchorColors.ink, size: 22),
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
