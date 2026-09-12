@@ -50,7 +50,20 @@ export async function createSession(
         model: MODEL,
         instructions,
         audio: {
-          input: { transcription: { model: 'whisper-1' } },
+          input: {
+            transcription: { model: 'whisper-1' },
+            // Model-side denoise (not on by default). near_field suits a phone
+            // or headset held close; use far_field for a laptop mic across a desk.
+            noise_reduction: { type: 'near_field' },
+            // Wait for a real pause before Anchor responds, so it doesn't cut in
+            // on half-finished sentences or react to its own echo.
+            turn_detection: {
+              type: 'server_vad',
+              threshold: 0.6,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 700,
+            },
+          },
           output: { voice: VOICE },
         },
       },

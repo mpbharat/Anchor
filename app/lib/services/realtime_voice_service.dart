@@ -81,7 +81,17 @@ class RealtimeVoice {
       };
 
       // 3. mic
-      _local = await navigator.mediaDevices.getUserMedia({'audio': true, 'video': false});
+      // Explicit echo cancellation stops Anchor's own voice (from the speakers)
+      // being picked up by the mic and treated as the user talking, which
+      // garbles the turn-taking during a speaker-out demo.
+      _local = await navigator.mediaDevices.getUserMedia({
+        'audio': {
+          'echoCancellation': true,
+          'noiseSuppression': true,
+          'autoGainControl': true,
+        },
+        'video': false,
+      });
       for (final t in _local!.getTracks()) {
         await _pc!.addTrack(t, _local!);
       }
@@ -118,7 +128,20 @@ class RealtimeVoice {
       final e = jsonDecode(raw) as Map<String, dynamic>;
       final type = e['type'] as String? ?? '';
       switch (type) {
+        // The user's whisper transcript resolves AFTER Anchor starts replying,
+        // so we must reserve the user's slot the moment their speech is
+        // committed — before any Anchor item is created — or the bubble lands
+        // out of order. This event fires early and carries the user item_id.
+        case 'input_audio_buffer.committed':
+          final uid = e['item_id'] as String?;
+          if (uid != null) {
+            _roleById[uid] = 'user';
+            _textById[uid] ??= '';
+            onItem?.call(uid, 'user'); // reserves the user slot in true order
+          }
+          break;
         case 'conversation.item.created':
+        case 'conversation.item.added': // GA gpt-realtime renamed this event
           final item = e['item'] as Map<String, dynamic>?;
           final id = item?['id'] as String?;
           final role = (item?['role'] as String?) == 'user' ? 'user' : 'anchor';

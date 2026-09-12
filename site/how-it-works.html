@@ -254,12 +254,16 @@
 <section><div class="wrap">
   <div class="kicker">UNDER THE HOOD</div>
   <h2>Built to be trusted.</h2>
-  <div class="body"><p>Your keys stay on the server, never in the app. Google is read-only: Anchor reads your calendar and inbox to see your load, and never sends, deletes, or posts anything. The reasoning runs on OpenAI, voice on OpenAI Realtime, grounding on Exa, all behind a Supabase backend.</p></div>
+  <div class="body"><p>Your keys stay on the server, never in the app. Google is read-only: Anchor reads your calendar and inbox to see your load, and never sends, deletes, or posts anything. The reasoning (the "no", the companion, the memory pass) runs on OpenAI GPT-4o mini; the live voice is OpenAI Realtime (gpt-realtime), a single speech-to-speech model that hears you and answers out loud in the "Sage" voice, with Whisper transcribing the on-screen captions; grounding is Exa web search; audio streams over WebRTC, all behind a Supabase backend.</p></div>
   <div class="hood">
-    <span class="chip">OpenAI · judgment + memory</span>
-    <span class="chip">OpenAI Realtime · live voice</span>
-    <span class="chip">Exa · grounding</span>
-    <span class="chip">Supabase · data + auth</span>
+    <span class="chip">OpenAI GPT-4o mini · the "no", companion + memory</span>
+    <span class="chip">OpenAI Realtime (gpt-realtime) · live duplex voice</span>
+    <span class="chip">Voice "Sage" · native speech out</span>
+    <span class="chip">Whisper · speech to text</span>
+    <span class="chip">Exa · web-search grounding</span>
+    <span class="chip">OpenRouter · model gateway</span>
+    <span class="chip">WebRTC · realtime audio transport</span>
+    <span class="chip">Supabase · Postgres, auth, RLS</span>
     <span class="chip">Flutter · iOS + Android</span>
   </div>
   <div class="cta">
