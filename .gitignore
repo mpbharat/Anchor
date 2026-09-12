@@ -31,3 +31,6 @@ dist/
 .DS_Store
 .vscode/
 *.log
+
+# Generated Flutter web build copied in for the Pages deploy (rebuild with flutter build web)
+site/app/

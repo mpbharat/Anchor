@@ -39,3 +39,25 @@ Do NOT set `PORT` — Render provides it and the server already reads it.
 - **CORS** is open (`cors()`), so the Flutter app can call it from anywhere for the demo.
 - **Python integrations** (Maria's extraction + Google read layer) can run as a separate Render service (Runtime: Python, root `integrations`) if we need it hosted; for the demo it can also run locally producing payloads. Decide based on the demo flow.
 - After the event: rotate all keys (they were shared over chat).
+
+---
+
+## Info website (Cloudflare Pages) — LIVE
+
+**Live URL:** https://anchor-4zt.pages.dev  (landing at `/`, live app embed at `/app/`)
+
+Neobrutalist landing page (`site/index.html`) with the real Flutter web build embedded in a phone frame. Deployed via wrangler direct upload (project `anchor`).
+
+### Rebuild + redeploy
+```bash
+# 1. rebuild the web app under /app/
+cd app && flutter build web --base-href "/app/" --release && cd ..
+# 2. refresh the copy the site serves
+rm -rf site/app && mkdir -p site/app && cp -R app/build/web/. site/app/
+# 3. deploy (needs .env.cloudflare with CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID)
+set -a; . ./.env.cloudflare; set +a
+npx wrangler pages deploy site --project-name=anchor --branch=main --commit-dirty=true
+```
+
+`site/app/` is gitignored (generated). `site/index.html` is the source of the landing page.
+Before submitting: drop the Loom/YouTube embed into the `#video` block in `site/index.html`.

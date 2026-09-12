@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anchor — the agent that says no</title>
+<meta name="description" content="Anchor is a commitment agent that lives on your phone and pushes back when you overcommit. Built at the Agents Everywhere hackathon." />
+<style>
+  :root{
+    --scr:#F4ECD8; --card:#FFFFFF; --ink:#16203A; --dim:#8C8770;
+    --accent:#2B4FF0; --energy:#FFD21E; --alert:#FF5236; --ok:#2FA862;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--scr);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .box{background:var(--card);border:2.5px solid var(--ink);border-radius:10px;box-shadow:6px 6px 0 var(--ink)}
+  a{color:inherit}
+  .btn{display:inline-block;border:2.5px solid var(--ink);border-radius:10px;padding:13px 20px;font-weight:800;text-decoration:none;box-shadow:4px 4px 0 var(--ink);transition:transform .05s ease}
+  .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-ink{background:var(--ink);color:#fff}
+  .btn-paper{background:var(--card)}
+  /* nav */
+  nav{border-bottom:2.5px solid var(--ink);background:var(--scr);position:sticky;top:0;z-index:10}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .word{font-weight:900;letter-spacing:4px;font-size:20px}
+  /* hero */
+  .hero{padding:56px 0 24px}
+  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+  .badge{display:inline-block;background:var(--energy);border:2px solid var(--ink);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:800;box-shadow:2px 2px 0 var(--ink)}
+  h1{font-size:52px;line-height:1.02;font-weight:900;margin:16px 0}
+  h1 .no{color:var(--alert)}
+  .lead{font-size:18px;color:var(--ink);max-width:40ch;margin-bottom:24px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap}
+  /* phone */
+  .phone{width:300px;max-width:100%;margin:0 auto;border:3px solid var(--ink);border-radius:34px;box-shadow:8px 8px 0 var(--ink);background:#000;padding:10px;overflow:hidden}
+  .phone .screen{border-radius:24px;overflow:hidden;background:var(--scr);aspect-ratio:9/19.5}
+  .phone iframe{width:100%;height:100%;border:0;display:block}
+  .cap{text-align:center;font-size:11px;color:var(--dim);margin-top:10px}
+  /* sections */
+  section{padding:44px 0}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--dim)}
+  h2{font-size:34px;font-weight:900;margin:8px 0 6px}
+  .sub{color:var(--dim);max-width:60ch}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+  .cards .box{padding:20px}
+  .cards h3{font-size:18px;font-weight:900;margin:10px 0 6px}
+  .cards p{font-size:14px;color:var(--ink)}
+  .pill{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:2.5px solid var(--ink);border-radius:9px;font-weight:900;box-shadow:3px 3px 0 var(--ink)}
+  .live{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+  .stack{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .chip{background:var(--card);border:2.5px solid var(--ink);border-radius:8px;padding:8px 14px;font-weight:800;font-size:14px;box-shadow:3px 3px 0 var(--ink)}
+  .team{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px}
+  .team .box{padding:18px}
+  .team .role{font-size:13px;color:var(--dim);margin-top:4px}
+  .video-frame{border:2.5px solid var(--ink);border-radius:12px;box-shadow:6px 6px 0 var(--ink);overflow:hidden;aspect-ratio:16/9;background:var(--ink);display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px}
+  footer{border-top:2.5px solid var(--ink);padding:30px 0;margin-top:20px}
+  footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  @media(max-width:820px){
+    .hero-grid,.live{grid-template-columns:1fr}
+    .cards,.team{grid-template-columns:1fr}
+    h1{font-size:40px}
+    .hero{padding:36px 0 8px}
+  }
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <span class="word">ANCHOR</span>
+  <a class="btn btn-paper" href="https://github.com/mpbharat/Anchor" target="_blank" rel="noopener">GitHub ↗</a>
+</div></nav>
+
+<header class="hero"><div class="wrap"><div class="hero-grid">
+  <div>
+    <span class="badge">#AgentsEverywhere</span>
+    <h1>The agent that says <span class="no">no</span>.</h1>
+    <p class="lead">Every productivity app helps you add more. Anchor holds you to three or four things a week and pushes back the moment you try to take on a fifth.</p>
+    <div class="cta">
+      <a class="btn btn-accent" href="#live">Try it live</a>
+      <a class="btn btn-ink" href="#demo">Watch the demo</a>
+    </div>
+  </div>
+  <div>
+    <div class="phone"><div class="screen">
+      <iframe src="/app/" title="Anchor live app" loading="lazy"></iframe>
+    </div></div>
+    <div class="cap">Live app running in your browser</div>
+  </div>
+</div></div></header>
+
+<section><div class="wrap">
+  <div class="eyebrow">WHY IT WORKS</div>
+  <h2>It lives where you overcommit.</h2>
+  <p class="sub">Because Anchor sits on your phone with your notifications, calendar, and mail, it sees your real load, not a self-report. A standalone chatbot can't. It has no presence in the moment a commitment is made or broken.</p>
+  <div class="cards">
+    <div class="box"><span class="pill" style="background:var(--alert);color:#fff">✕</span><h3>Says no</h3><p>Try to add a fifth commitment and Anchor refuses, reflecting your load back and naming what it weighed against.</p></div>
+    <div class="box"><span class="pill" style="background:var(--card)">◔</span><h3>Stays silent</h3><p>When nothing needs saying, it says nothing, and logs every silent call so you see everything it chose not to interrupt you with.</p></div>
+    <div class="box"><span class="pill" style="background:var(--accent);color:#fff">◉</span><h3>Talks like a coach</h3><p>Speak to it by voice. It grounds its push-back in real sources with Exa, so an unrealistic deadline comes with evidence.</p></div>
+  </div>
+</div></section>
+
+<section id="live"><div class="wrap"><div class="live">
+  <div>
+    <div class="eyebrow">TRY IT</div>
+    <h2>Click through the real app.</h2>
+    <p class="sub">This is the actual Anchor build, running live. Make commitments on the Load, try to add too many on Commit, and meet the "no." Tap the mic to talk to Anchor.</p>
+    <div class="cta" style="margin-top:20px"><a class="btn btn-accent" href="/app/" target="_blank" rel="noopener">Open full screen ↗</a></div>
+  </div>
+  <div>
+    <div class="phone"><div class="screen">
+      <iframe src="/app/" title="Anchor live app" loading="lazy"></iframe>
+    </div></div>
+  </div>
+</div></div></section>
+
+<section id="demo"><div class="wrap">
+  <div class="eyebrow">DEMO</div>
+  <h2>Two minutes, start to finish.</h2>
+  <p class="sub" style="margin-bottom:22px">Make three commitments, get told no on the fourth, watch a nudge fire, then see the silence log and the weekly standing.</p>
+  <div class="video-frame" id="video">
+    <div>
+      <div class="mono" style="font-size:12px;opacity:.7">VIDEO</div>
+      <div style="font-weight:900;font-size:20px;margin-top:8px">Demo link drops here</div>
+      <div style="opacity:.7;font-size:13px;margin-top:6px">Replace with the Loom / YouTube embed before submitting.</div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">BUILT WITH</div>
+  <h2>The stack.</h2>
+  <div class="stack">
+    <span class="chip">OpenAI · judgment + companion</span>
+    <span class="chip">OpenRouter · voice</span>
+    <span class="chip">Exa · grounding</span>
+    <span class="chip">Supabase · data + auth</span>
+    <span class="chip">Flutter · iOS + Android</span>
+    <span class="chip">Node + TypeScript · API</span>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">THE CRAWLERS</div>
+  <h2>Team.</h2>
+  <div class="team">
+    <div class="box"><div style="font-weight:900;font-size:18px">Bharat Sankar</div><div class="role">Lead · product, design, the AI brain, and the Flutter app.</div></div>
+    <div class="box"><div style="font-weight:900;font-size:18px">Mary Sophiya</div><div class="role">Import extraction and Google Calendar + Gmail integration.</div></div>
+    <div class="box"><div style="font-weight:900;font-size:18px">Merlin Jose</div><div class="role">Supabase schema and the Node + TypeScript API.</div></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span class="word">ANCHOR</span>
+  <span class="mono" style="font-size:12px;color:var(--dim)">#AgentsEverywhere · The Crawlers</span>
+  <a class="btn btn-ink" href="https://github.com/mpbharat/Anchor" target="_blank" rel="noopener">GitHub ↗</a>
+</div></footer>
+
+</body>
+</html>
