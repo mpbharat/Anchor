@@ -18,7 +18,13 @@ class LoadScreen extends StatelessWidget {
         children: [
           const AnchorHeader(trailing: AnchorBadge('WK37 / MON')),
           const SizedBox(height: 14),
-          const _CapacityGauge(loaded: 3, rated: 4),
+          FutureBuilder<Load>(
+            future: api.currentLoad(),
+            builder: (context, snap) {
+              final l = snap.data;
+              return _CapacityGauge(loaded: l?.loaded ?? 0, rated: l?.cap ?? 4);
+            },
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: FutureBuilder<List<Commitment>>(

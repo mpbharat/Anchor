@@ -57,7 +57,11 @@ class CommitScreen extends StatelessWidget {
                   onTap: () async {
                     final j = await api.judge('Write the launch newsletter');
                     if (!context.mounted) return;
-                    if (j.verdict == 'declined') {
+                    if (j.verdict == 'allowed') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(j.spoken.isEmpty ? 'On the record.' : j.spoken)),
+                      );
+                    } else {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => DeclinedScreen(judgment: j)),
                       );
