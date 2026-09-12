@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How Anchor works</title>
+<meta name="description" content="The full picture: how Anchor holds you to a few commitments, says no, learns you, nudges at the right moment, and stays silent the rest of the time." />
+<style>
+  :root{
+    --scr:#F4ECD8; --card:#FFFFFF; --ink:#16203A; --dim:#8C8770;
+    --accent:#2B4FF0; --energy:#FFD21E; --alert:#FF5236; --ok:#2FA862;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--scr);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  a{color:var(--accent);text-decoration:none;font-weight:700}
+  .btn{display:inline-block;border:2.5px solid var(--ink);border-radius:10px;padding:12px 18px;font-weight:800;color:var(--ink);text-decoration:none;box-shadow:4px 4px 0 var(--ink)}
+  .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-paper{background:var(--card)}
+  /* nav */
+  nav{border-bottom:2.5px solid var(--ink);background:var(--scr);position:sticky;top:0;z-index:10}
+  nav .row{max-width:920px;margin:0 auto;padding:0 22px;height:62px;display:flex;align-items:center;justify-content:space-between}
+  .word{font-weight:900;letter-spacing:4px;font-size:19px;color:var(--ink)}
+  .navlinks a{margin-left:18px;font-size:14px;color:var(--ink)}
+  .navlinks a.on{color:var(--accent)}
+  /* hero */
+  header{padding:64px 0 20px}
+  header h1{font-size:clamp(38px,7vw,68px);font-weight:900;line-height:0.98;letter-spacing:-1px}
+  header .thesis{font-size:19px;max-width:60ch;margin-top:18px;color:var(--ink)}
+  header .thesis b{background:var(--energy);padding:0 4px;box-decoration-break:clone}
+  /* loop */
+  .loop{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:38px 0 10px;border:2.5px solid var(--ink);border-radius:12px;overflow:hidden;box-shadow:7px 7px 0 var(--ink)}
+  .loop .step{padding:18px 16px;border-right:2.5px solid var(--ink);background:var(--card)}
+  .loop .step:last-child{border-right:0}
+  .loop .n{font-family:ui-monospace,monospace;font-weight:800;font-size:12px;color:var(--accent)}
+  .loop .st{font-weight:900;font-size:16px;margin:8px 0 4px}
+  .loop .sd{font-size:13px;color:var(--dim);line-height:1.35}
+  .loopnote{font-size:13px;color:var(--dim);margin-top:12px}
+  /* generic section */
+  section{padding:46px 0;border-top:2px solid rgba(22,32,58,.12)}
+  h2{font-size:clamp(26px,4vw,38px);font-weight:900;line-height:1.05;letter-spacing:-0.5px}
+  .kicker{font-family:ui-monospace,monospace;font-size:12px;font-weight:800;color:var(--accent);letter-spacing:1px;margin-bottom:8px}
+  .body{font-size:16px;max-width:62ch;margin-top:14px}
+  .body p{margin-top:12px}
+  /* the no */
+  .refusal{margin-top:22px;display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+  .saidno{border:2.5px solid var(--ink);border-radius:12px;background:var(--card);box-shadow:6px 6px 0 var(--ink);overflow:hidden}
+  .saidno .top{background:var(--alert);color:#fff;font-family:ui-monospace,monospace;font-weight:800;font-size:11px;padding:7px 14px;letter-spacing:1px}
+  .saidno .said{font-size:19px;font-weight:800;line-height:1.35;padding:16px}
+  .saidno .weighed{border-top:2px solid var(--ink);padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap}
+  .tag{border:2px solid var(--ink);border-radius:6px;padding:3px 9px;font-size:12px;font-weight:800;box-shadow:2px 2px 0 var(--ink)}
+  .reasons li{margin:10px 0 0 0;padding-left:26px;position:relative;font-size:15px;list-style:none}
+  .reasons li::before{content:"";position:absolute;left:0;top:6px;width:12px;height:12px;background:var(--accent);border:2px solid var(--ink)}
+  /* memory panel */
+  .remember{margin-top:22px;border:2.5px solid var(--ink);border-radius:12px;background:var(--ink);color:#fff;box-shadow:6px 6px 0 rgba(0,0,0,.35);padding:18px 20px}
+  .remember .rh{font-family:ui-monospace,monospace;font-size:11px;color:var(--energy);font-weight:800;letter-spacing:1px}
+  .remember .rrow{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.14);font-size:14px}
+  .remember .rrow:last-child{border-bottom:0}
+  .remember .rk{color:#cfc9b8;min-width:96px;font-weight:700}
+  /* nudges */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+  .ncard{border:2.5px solid var(--ink);border-radius:12px;background:var(--card);box-shadow:6px 6px 0 var(--ink);padding:18px}
+  .ncard.re{border-color:var(--alert)}
+  .ncard.pro{border-color:var(--accent)}
+  .ncard h4{font-size:13px;font-family:ui-monospace,monospace;letter-spacing:1px}
+  .ncard.re h4{color:var(--alert)}
+  .ncard.pro h4{color:var(--accent)}
+  .ex{margin-top:12px;font-size:14px;line-height:1.4}
+  .ex b{font-weight:800}
+  .sources{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .src{border:2px solid var(--ink);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:800;box-shadow:2px 2px 0 var(--ink);background:var(--card)}
+  .src.soon{color:var(--dim);border-style:dashed;box-shadow:none}
+  /* silence band */
+  .silence{background:var(--ink);color:#fff;border-radius:14px;padding:34px 26px;margin-top:22px;box-shadow:7px 7px 0 rgba(0,0,0,.35)}
+  .silence .big{font-size:clamp(22px,3.4vw,30px);font-weight:900;line-height:1.2;max-width:22ch}
+  .silence .small{color:#cfc9b8;margin-top:12px;max-width:56ch;font-size:15px}
+  /* recap stat */
+  .stat{display:flex;align-items:baseline;gap:14px;margin-top:20px;background:var(--energy);border:2.5px solid var(--ink);border-radius:12px;box-shadow:6px 6px 0 var(--ink);padding:22px}
+  .stat .num{font-size:64px;font-weight:900;line-height:.8}
+  .stat .lab{font-weight:800;font-size:17px}
+  /* under the hood */
+  .hood{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .chip{background:var(--card);border:2.5px solid var(--ink);border-radius:8px;padding:8px 13px;font-weight:800;font-size:13px;box-shadow:3px 3px 0 var(--ink)}
+  /* science */
+  .science{margin-top:20px}
+  .srow{display:grid;grid-template-columns:.9fr 1.1fr;gap:22px;padding:16px 0;border-top:2px solid rgba(22,32,58,.14)}
+  .srow:first-child{border-top:0}
+  .sname{font-weight:900;font-size:16px}
+  .swho{font-size:12px;color:var(--dim);margin-top:3px}
+  .suse{font-size:14px;line-height:1.45}
+  .suse b{background:var(--energy);padding:0 3px}
+  @media(max-width:760px){.srow{grid-template-columns:1fr;gap:6px}}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+  footer{border-top:2.5px solid var(--ink);padding:26px 0;margin-top:20px}
+  footer .row{max-width:920px;margin:0 auto;padding:0 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  @media(max-width:760px){
+    .loop{grid-template-columns:1fr 1fr}
+    .loop .step:nth-child(2){border-right:0}
+    .refusal,.cols{grid-template-columns:1fr}
+    .navlinks a:first-child{display:none}
+  }
+</style>
+</head>
+<body>
+
+<nav><div class="row">
+  <a class="word" href="/">ANCHOR</a>
+  <div class="navlinks">
+    <a href="/#live">Try it</a>
+    <a class="on" href="/how-it-works.html">How it works</a>
+    <a href="https://github.com/mpbharat/Anchor" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</div></nav>
+
+<header><div class="wrap">
+  <h1>How Anchor<br>actually works.</h1>
+  <p class="thesis">Anchor runs one loop every week. You put a few things on the record, it watches your real life against them, it pushes back when you drift, and it settles up on Friday. <b>Saying no is the feature.</b></p>
+  <div class="loop">
+    <div class="step"><div class="n">01</div><div class="st">You commit</div><div class="sd">Three or four things for the week. By voice or text. Each one gets an if-then plan.</div></div>
+    <div class="step"><div class="n">02</div><div class="st">It watches</div><div class="sd">Your load, your inbox, your calendar. It knows what you took on and what is slipping.</div></div>
+    <div class="step"><div class="n">03</div><div class="st">It pushes back</div><div class="sd">A fifth thing, a purchase over budget, a Friday pattern. It nudges, or it says no.</div></div>
+    <div class="step"><div class="n">04</div><div class="st">It settles up</div><div class="sd">Friday recap. What you kept, what slipped, forgiven and carried. Then the loop resets.</div></div>
+  </div>
+  <p class="loopnote">Everything below is one of those four steps, in detail.</p>
+</div></header>
+
+<section><div class="wrap">
+  <div class="kicker">STEP 01 · THE FEW</div>
+  <h2>A hard cap of four.</h2>
+  <div class="body">
+    <p>Most tools reward you for adding more. Anchor does the opposite. You can hold four commitments in a week and no more, because the limit is what makes them real. Little's Law, not willpower: fewer things in progress means things actually finish.</p>
+    <p>Each commitment carries a small if-then plan ("if it hits Friday, I draft it Thursday morning"). That single habit, implementation intentions, roughly doubles follow-through in the research. Anchor captures it in the same breath you commit.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">STEP 03 · THE NO</div>
+  <h2>It reasons over your week, then refuses.</h2>
+  <div class="body"><p>When you try to take on something new, Anchor weighs it against what you are already carrying and what you have said matters. If you are full, it declines, and it does it the way a good coach would: it reflects the ask back, affirms it is your call, and names the trade you would be making. No guilt, no lecture. It uses your real numbers and never invents them.</p></div>
+  <div class="refusal">
+    <div class="saidno">
+      <div class="top">NOT THIS WEEK</div>
+      <div class="said">A newsletter sounds like it matters. You are at four already and behind on the gym. If it goes in, which comes out?</div>
+      <div class="weighed">
+        <span class="tag">Pricing revamp</span><span class="tag">Gym x3</span><span class="tag">Dining budget</span><span class="tag">Call Dad</span>
+      </div>
+    </div>
+    <ul class="reasons">
+      <li>Reflects the request before answering, so it does not trigger the reactance that makes people dig in.</li>
+      <li>Frames the limit around your commitments, never a rule.</li>
+      <li>Offers the trade instead of a flat refusal.</li>
+      <li>Every judgment is logged, including the ones where it stayed quiet.</li>
+    </ul>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">STEP 02 · MEMORY</div>
+  <h2>It learns how you overcommit.</h2>
+  <div class="body"><p>After you talk with Anchor, a quiet reflection pass reads the conversation and updates what it knows about you: where you tend to overcommit, what you actually prioritise, your habits. It runs on a debounce, not on every message, so it stays cheap. The model proposes; the code reconciles and dedupes, so your memory sharpens instead of bloating. The more you talk, the better its "no" gets.</p></div>
+  <div class="remember">
+    <div class="rh">WHAT ANCHOR REMEMBERS ABOUT YOU</div>
+    <div class="rrow"><span class="rk">Pitfalls</span><span>Says yes then resents it. Starts a fifth thing on Fridays.</span></div>
+    <div class="rrow"><span class="rk">Priorities</span><span>Ship over polish. Family evenings. Protect mornings for deep work.</span></div>
+    <div class="rrow"><span class="rk">Habits</span><span>Orders in most Saturdays. Gym Mon / Wed / Fri.</span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">STEP 03 · NUDGES</div>
+  <h2>It reads the signals, then nudges when it counts.</h2>
+  <div class="body"><p>Anchor only interrupts when something real happens. Two kinds. Reactive, when a signal breaches a commitment right now. Proactive, when it sees a pattern about to repeat and gets ahead of it. Both land on your phone and your wrist.</p></div>
+  <div class="cols">
+    <div class="ncard re">
+      <h4>REACTIVE · SOMETHING BREACHED</h4>
+      <div class="ex"><b>Gmail.</b> An Amazon receipt lands and pushes you past your dining cap. "That is 1,050 of your 1,000 AED. Worth it?"</div>
+      <div class="ex"><b>Calendar.</b> A three-hour meeting drops onto your deep-work morning. "This collides with shipping the pricing revamp. Move it or drop it?"</div>
+    </div>
+    <div class="ncard pro">
+      <h4>PROACTIVE · A PATTERN IS COMING</h4>
+      <div class="ex"><b>Learned habit.</b> You order in most Fridays at six. At 5:45: "Friday takeaway again? You are near your dining cap. Cook tonight?"</div>
+      <div class="ex"><b>Learned habit.</b> You overload every Monday. Monday 9am: "Last Monday you added two and dropped one by Wednesday. Ease in."</div>
+    </div>
+  </div>
+  <div class="sources">
+    <span class="src">Gmail · live</span>
+    <span class="src">Calendar · live</span>
+    <span class="src soon">Notifications · soon</span>
+    <span class="src soon">Health · soon</span>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">THE DEFAULT</div>
+  <h2>Silent unless it matters.</h2>
+  <div class="silence">
+    <div class="big">Anchor never interrupts you uninvited. When it decides there is nothing worth saying, it says nothing, and writes that decision down.</div>
+    <div class="small">Open the silence log and you can see every moment it chose to stay quiet. It is the opposite of an app fighting for your attention, and it is the thing that earns the trust to say no when it counts.</div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">HOW YOU TALK TO IT</div>
+  <h2>A real conversation, out loud.</h2>
+  <div class="body"><p>Anchor is a conversation first. Tap voice and it is a live, natural call: you think out loud, it answers in the moment, and when a factual question comes up ("is a half marathon in six weeks realistic?") it checks real sources before it answers instead of guessing. Coach, counsellor, friend, and the honest voice that still says the hard thing. One personality that flexes to what you need.</p></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">STEP 04 · THE RECAP</div>
+  <h2>Friday, it settles up. Kindly.</h2>
+  <div class="body"><p>At the end of the week Anchor shows where you stand: what you kept, what slipped. A miss is a miss, named plainly, then forgiven and carried, not turned into a shame spiral. Self-forgiveness after a slip is what predicts getting back on track, so the recap is built to forgive on purpose.</p></div>
+  <div class="stat"><span class="num">2/3</span><span class="lab">kept this week. The gym slipped once. That is one week, not who you are.</span></div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">BASED ON THE SCIENCE</div>
+  <h2>Every behaviour has a reason.</h2>
+  <div class="body"><p>Anchor is not a productivity aesthetic. Each choice traces to a finding about how commitment and follow-through actually work.</p></div>
+  <div class="science">
+    <div class="srow">
+      <div><div class="sname">Implementation intentions</div><div class="swho">Gollwitzer</div></div>
+      <div class="suse">An "if-then" plan roughly doubles follow-through. In Anchor: <b>every commitment captures its own if-then</b> the moment you make it.</div>
+    </div>
+    <div class="srow">
+      <div><div class="sname">WIP limits, Little's Law</div><div class="swho">Queueing theory</div></div>
+      <div class="suse">Fewer things in progress means things finish sooner. In Anchor: <b>a hard cap of four</b>, not an open backlog.</div>
+    </div>
+    <div class="srow">
+      <div><div class="sname">Motivational interviewing, reactance</div><div class="swho">Miller &amp; Rollnick; Brehm</div></div>
+      <div class="suse">A command makes people dig in and overcommit more. In Anchor: the "no" <b>reflects the ask and affirms it is your call</b> instead of ordering you.</div>
+    </div>
+    <div class="srow">
+      <div><div class="sname">The planning fallacy</div><div class="swho">Kahneman &amp; Tversky</div></div>
+      <div class="suse">We underestimate how long things take. In Anchor: it <b>grounds "is this realistic?" in real sources</b> before it agrees.</div>
+    </div>
+    <div class="srow">
+      <div><div class="sname">Self-forgiveness, the what-the-hell effect</div><div class="swho">Polivy &amp; Herman; Wohl</div></div>
+      <div class="suse">Shame after a slip makes the next slip more likely; self-forgiveness predicts recovery. In Anchor: the recap <b>forgives a miss and carries it</b>, never piles on.</div>
+    </div>
+    <div class="srow">
+      <div><div class="sname">The fresh-start effect</div><div class="swho">Milkman</div></div>
+      <div class="suse">People re-commit at natural boundaries. In Anchor: <b>the week is the unit</b>, and each Friday resets the loop.</div>
+    </div>
+    <div class="srow">
+      <div><div class="sname">Overjustification</div><div class="swho">Deci</div></div>
+      <div class="suse">External rewards crowd out real motivation. In Anchor: <b>no points, no streaks, no gamification</b>. The only reward is keeping your word.</div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">UNDER THE HOOD</div>
+  <h2>Built to be trusted.</h2>
+  <div class="body"><p>Your keys stay on the server, never in the app. Google is read-only: Anchor reads your calendar and inbox to see your load, and never sends, deletes, or posts anything. The reasoning runs on OpenAI, voice on OpenAI Realtime, grounding on Exa, all behind a Supabase backend.</p></div>
+  <div class="hood">
+    <span class="chip">OpenAI · judgment + memory</span>
+    <span class="chip">OpenAI Realtime · live voice</span>
+    <span class="chip">Exa · grounding</span>
+    <span class="chip">Supabase · data + auth</span>
+    <span class="chip">Flutter · iOS + Android</span>
+  </div>
+  <div class="cta">
+    <a class="btn btn-accent" href="/#live">Try the live app</a>
+    <a class="btn btn-paper" href="https://github.com/mpbharat/Anchor" target="_blank" rel="noopener">See the code</a>
+  </div>
+</div></section>
+
+<footer><div class="row">
+  <a class="word" href="/">ANCHOR</a>
+  <span class="mono" style="font-size:12px;color:var(--dim)">#AgentsEverywhere · The Crawlers</span>
+</div></footer>
+
+</body>
+</html>

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
@@ -58,7 +59,8 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       }
       ..onItemDone = (id, role, text) {
         // persist so Talk shows the full voice conversation afterwards
-        _api.postMessage(role == 'anchor' ? 'anchor' : 'user', text);
+        // (skipped on the shared web demo to keep its state clean)
+        if (!kIsWeb) _api.postMessage(role == 'anchor' ? 'anchor' : 'user', text);
       };
     _rt.connect();
   }
@@ -71,7 +73,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   Future<void> _end() async {
     await _rt.disconnect();
-    _api.reflect(); // learn from this conversation (fire-and-forget)
+    if (!kIsWeb) _api.reflect(); // learn from this conversation (native only; keep web demo curated)
     if (mounted) Navigator.of(context).maybePop();
   }
 

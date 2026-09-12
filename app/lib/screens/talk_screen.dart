@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
@@ -30,7 +31,10 @@ class _TalkScreenState extends State<TalkScreen> {
   }
 
   Future<void> _bootstrap() async {
-    final history = await _api.conversation();
+    // Web is a shared public demo: start every page-load fresh (greeting only)
+    // so visitors get a clean, consistent state and don't inherit each other's
+    // chat. The native app keeps full conversation history.
+    final history = kIsWeb ? <Turn>[] : await _api.conversation();
     final load = await _api.currentLoad();
     if (!mounted) return;
     setState(() {
@@ -70,8 +74,9 @@ class _TalkScreenState extends State<TalkScreen> {
       _sending = false;
     });
     _scrollDown();
-    // debounced reflection: learn from the conversation every few turns
-    if (++_sinceReflect >= 5) {
+    // debounced reflection: learn from the conversation every few turns.
+    // Skipped on web so the shared public demo's memory stays curated.
+    if (!kIsWeb && ++_sinceReflect >= 5) {
       _sinceReflect = 0;
       _api.reflect();
     }
