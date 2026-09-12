@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Live duplex voice: flutter_webrtc's getUserMedia needs the mic. The
+         plugin merges in MODIFY_AUDIO_SETTINGS but not RECORD_AUDIO. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="anchor"
         android:name="${applicationName}"
