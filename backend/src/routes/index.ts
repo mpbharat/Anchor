@@ -14,6 +14,7 @@ import * as integrations from '../controllers/integration.controller';
 import * as witnesses from '../controllers/witness.controller';
 import * as messages from '../controllers/message.controller';
 import * as pushTokens from '../controllers/pushtoken.controller';
+import * as companion from '../controllers/companion.controller';
 
 // Paths match ANCHOR-BUILD-SPEC.md §7 exactly (no /api prefix).
 const router = Router();
@@ -55,6 +56,7 @@ router.get('/silence-log', asyncHandler(judge.silenceLog));
 router.get('/judgments', asyncHandler(judge.listJudgments));
 router.get('/messages', asyncHandler(messages.list));
 router.post('/messages', validateBody(messages.addMessageSchema), asyncHandler(messages.add));
+router.post('/companion/web-search', validateBody(companion.webSearchSchema), asyncHandler(companion.webSearch));
 
 // Integrations & signals (Maria)
 router.get('/integrations', asyncHandler(integrations.list));
