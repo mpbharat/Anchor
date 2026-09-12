@@ -1,48 +1,13 @@
 import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
+import 'connect_screen.dart';
+import 'import_screen.dart';
 
 /// Settings — where you set Anchor up to know you: import your history and
-/// connect Google. The import + Google screens are owned by the integrations
-/// build (Mary/Merlin); this screen is the flow home. When their screens land,
-/// wire each row's onTap to push them (see TODO below).
+/// connect Google. This screen is the flow home; each row pushes the real
+/// screen (07 Import, 08 Connect).
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  void _explain(BuildContext context, String title, String what) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: AnchorBox.surface(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-              const SizedBox(height: 8),
-              Text(what, style: const TextStyle(fontSize: 14, height: 1.4, color: AnchorColors.ink)),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => Navigator.of(context).maybePop(),
-                child: Container(
-                  height: 48,
-                  alignment: Alignment.center,
-                  decoration: AnchorBox.surface(bg: AnchorColors.ink),
-                  // TODO(integrations): replace this with a push to the import /
-                  // Google connect screen once Mary/Merlin's screens are merged.
-                  child: const Text('CONNECT · COMING FROM THE INTEGRATIONS BUILD',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,15 +57,15 @@ class SettingsScreen extends StatelessWidget {
               _SetupRow(
                 title: 'Import your history',
                 subtitle: 'Bring a ChatGPT or Claude export so Anchor knows your patterns from day one.',
-                onTap: () => _explain(context, 'Import your history',
-                    'Anchor reads a ChatGPT or Claude export and learns how you overcommit, what you prioritise, and your habits, so it can hold you from the first week.'),
+                onTap: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const ImportScreen())),
               ),
               const SizedBox(height: 12),
               _SetupRow(
                 title: 'Connect Google',
                 subtitle: 'Calendar + Gmail, read-only. Powers your real load and the nudges.',
-                onTap: () => _explain(context, 'Connect Google',
-                    'Anchor reads your calendar and inbox (read-only, it never sends or deletes) to see your real load and fire the right nudges: a purchase over budget, a meeting on your deep-work morning.'),
+                onTap: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const ConnectScreen())),
               ),
               const Spacer(),
               Container(
