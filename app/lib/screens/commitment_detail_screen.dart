@@ -13,6 +13,7 @@ class CommitmentDetailScreen extends StatefulWidget {
 class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
   final _api = AnchorApi();
   Commitment? _c;
+  bool _loading = true;
   bool _busy = false;
   bool _confirmDrop = false;
 
@@ -23,8 +24,12 @@ class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
   }
 
   Future<void> _load() async {
-    final c = await _api.commitment(widget.id);
-    if (mounted) setState(() => _c = c);
+    try {
+      final c = await _api.commitment(widget.id);
+      if (mounted) setState(() { _c = c; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _do(Future<bool> Function() action) async {
@@ -78,8 +83,26 @@ class _CommitmentDetailScreenState extends State<CommitmentDetailScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-          child: c == null
+          child: _loading
               ? const Center(child: CircularProgressIndicator())
+              : c == null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text("Couldn't load this one.", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                      const SizedBox(height: 14),
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          decoration: AnchorBox.surface(bg: AnchorColors.ink),
+                          child: const Text('GO BACK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
