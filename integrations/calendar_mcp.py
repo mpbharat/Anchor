@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from calendar_service import get_upcoming_events
+from calendar_service import get_relevant_upcoming_events
 
 
 mcp = FastMCP("Anchor Calendar")
@@ -11,7 +11,7 @@ def list_calendar_events(
     max_results: int = 20,
 ) -> list[dict]:
     """
-    Fetch upcoming events from the user's Google Calendar.
+    Fetch upcoming, non-cancelled calendar commitments from the user's Google Calendar.
 
     Args:
         max_results: Maximum number of events to return.
@@ -20,7 +20,7 @@ def list_calendar_events(
         A list of calendar events with useful event information.
     """
 
-    events = get_upcoming_events(max_results=max_results)
+    events = get_relevant_upcoming_events(max_results=max_results)
 
     result = []
 
@@ -39,7 +39,6 @@ def list_calendar_events(
                 "source": "calendar",
                 "external_id": event.get("id"),
                 "title": event.get("summary", ""),
-                "description": event.get("description", ""),
                 "start_time": start.get("dateTime") or start.get("date"),
                 "end_time": end.get("dateTime") or end.get("date"),
                 "location": event.get("location", ""),

@@ -9,6 +9,9 @@ Anchor shows the user a prompt to run in ChatGPT/Claude; they paste the reply (o
 
 ## 2. Gmail + Calendar (read-only)
 - Store the grant via `POST /integrations/google` (read-only scopes only — Anchor never sends, deletes, or posts).
+- Send only selected load signals: purchases, actionable incoming asks, and upcoming non-cancelled regular events. Gmail fetches metadata only and excludes promotional, social, forum, spam, newsletter, and ordinary correspondence.
+- `POST /signals` is authenticated. Set `ANCHOR_API_TOKEN` to the signed-in user's Supabase access token before calling `sync_relevant_emails()` or `sync_relevant_events()`; never commit it.
+- Signals default to `https://anchor-qo9j.onrender.com/signals`. To use a local backend instead, set `ANCHOR_SIGNALS_API_URL=http://localhost:3000/signals` in your shell.
 - Parse purchases / events / incoming asks and push them via `POST /signals` → they land in `load_signals` and feed the nudge engine.
 - **One shared Google account is enough for the demo.** Do not build per-user OAuth — it's a config swap later, not a rebuild.
 
