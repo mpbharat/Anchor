@@ -56,11 +56,36 @@ class SettingsScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('SETTINGS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 3)),
+                  const Text('PROFILE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 3)),
                   GestureDetector(onTap: () => Navigator.of(context).maybePop(), child: const Icon(Icons.close, color: AnchorColors.ink)),
                 ],
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AnchorBox.surface(),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: AnchorBox.surface(bg: AnchorColors.energy, radius: 26, shadow: 2),
+                      child: const Text('B', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22)),
+                    ),
+                    const SizedBox(width: 14),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Bharat', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+                        SizedBox(height: 3),
+                        Text('Holding four this week', style: TextStyle(fontSize: 13, color: AnchorColors.dim)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
               const Text('SET ANCHOR UP',
                   style: TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w800, color: AnchorColors.dim, letterSpacing: 1)),
               const SizedBox(height: 12),

@@ -3,6 +3,7 @@ import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
 import '../widgets/anchor_chrome.dart';
 import 'commitment_detail_screen.dart';
+import 'commit_sheet.dart';
 
 /// Focus — the few things you're holding this week. Tap one for its detail,
 /// progress, and to check in or drop it. (Renamed from "Load".)
@@ -31,6 +32,11 @@ class _LoadScreenState extends State<LoadScreen> {
     });
   }
 
+  Future<void> _openCommit() async {
+    await showCommitSheet(context);
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -38,7 +44,25 @@ class _LoadScreenState extends State<LoadScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AnchorHeader(trailing: AnchorBadge('WK37 / FRI')),
+          AnchorHeader(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AnchorBadge('WK37 / FRI'),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _openCommit,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 20, shadow: 3),
+                    child: const Icon(Icons.add, color: Colors.white, size: 22),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 14),
           FutureBuilder<Load>(
             future: _load,

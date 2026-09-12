@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../theme/anchor_theme.dart';
 import '../api/anchor_api.dart';
 import '../widgets/anchor_chrome.dart';
-import 'commit_sheet.dart';
 import 'voice_call_screen.dart';
 import 'settings_screen.dart';
 
@@ -86,17 +85,12 @@ class _TalkScreenState extends State<TalkScreen> {
     }
   }
 
-  Future<void> _openCommit() async {
-    await showCommitSheet(context);
-    _bootstrap(); // refresh load label after a commitment lands
-  }
-
   Future<void> _openCall() async {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VoiceCallScreen()));
     _bootstrap(); // refresh transcript + load after a voice session
   }
 
-  void _openSettings() {
+  void _openProfile() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
   }
 
@@ -115,25 +109,21 @@ class _TalkScreenState extends State<TalkScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnchorHeader(
-            leading: GestureDetector(
-              onTap: _openSettings,
-              child: const Icon(Icons.settings, color: AnchorColors.ink, size: 22),
-            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (_loadLabel.isNotEmpty) AnchorBadge(_loadLabel),
+                const SizedBox(width: 8),
                 GestureDetector(
-                  onTap: _openCall,
+                  onTap: _openProfile,
                   child: Container(
                     width: 40,
                     height: 40,
                     alignment: Alignment.center,
-                    decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 20, shadow: 3),
-                    child: const Icon(Icons.graphic_eq, color: Colors.white, size: 20),
+                    decoration: AnchorBox.surface(bg: AnchorColors.card, radius: 20, shadow: 3),
+                    child: const Icon(Icons.person, color: AnchorColors.ink, size: 22),
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (_loadLabel.isNotEmpty) AnchorBadge(_loadLabel),
               ],
             ),
           ),
@@ -150,7 +140,7 @@ class _TalkScreenState extends State<TalkScreen> {
           _InputBar(
             controller: _input,
             sending: _sending,
-            onCommit: _openCommit,
+            onVoice: _openCall,
             onSend: () => _send(_input.text),
           ),
         ],
@@ -189,12 +179,12 @@ class _InputBar extends StatelessWidget {
   const _InputBar({
     required this.controller,
     required this.sending,
-    required this.onCommit,
+    required this.onVoice,
     required this.onSend,
   });
   final TextEditingController controller;
   final bool sending;
-  final VoidCallback onCommit;
+  final VoidCallback onVoice;
   final VoidCallback onSend;
 
   @override
@@ -202,13 +192,13 @@ class _InputBar extends StatelessWidget {
     return Row(
       children: [
         GestureDetector(
-          onTap: onCommit,
+          onTap: onVoice,
           child: Container(
             width: 48,
             height: 48,
             alignment: Alignment.center,
-            decoration: AnchorBox.surface(bg: AnchorColors.card, radius: 24, shadow: 3),
-            child: const Icon(Icons.add, color: AnchorColors.ink),
+            decoration: AnchorBox.surface(bg: AnchorColors.accent, radius: 24, shadow: 3),
+            child: const Icon(Icons.graphic_eq, color: Colors.white),
           ),
         ),
         const SizedBox(width: 10),
